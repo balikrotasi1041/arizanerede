@@ -9,6 +9,9 @@
     { "pattern": "arizanerede.com", "custom_domain": true },
     { "pattern": "www.arizanerede.com", "custom_domain": true }
   ],
+  "vars": {
+    "GA_MEASUREMENT_ID": "G-CEBVEYWRRK"
+  },
   "observability": {
     "enabled": true,
     "logs": { "enabled": true, "head_sampling_rate": 1 },
