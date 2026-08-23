@@ -2,8 +2,8 @@ import {
   SITE_ORIGIN, PROVINCES, deviceTypes, brands, families, models, issues,
   deviceTypeBySlug, brandBySlug, familyByKey, modelByKey, issueByKey,
   pathForDeviceType, pathForBrand, pathForFamily, pathForModel, pathForIssue, normalize
-} from "./data.js";
-import { renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch, renderPolicy, render404 } from "./ui.js";
+} from "./catalog.js";
+import { renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch, renderPolicy, renderServiceRights, render404 } from "./ui.js";
 
 function securityHeaders(headers=new Headers()){
   headers.set("strict-transport-security","max-age=31536000; includeSubDomains");headers.set("x-content-type-options","nosniff");headers.set("referrer-policy","strict-origin-when-cross-origin");headers.set("x-frame-options","DENY");headers.set("cross-origin-opener-policy","same-origin");headers.set("permissions-policy","camera=(), microphone=(), geolocation=()");headers.set("content-security-policy","default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests");return headers;
@@ -14,28 +14,40 @@ function xmlEscape(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"
 
 function search(q){
   const terms=normalize(q).split(" ").filter(Boolean);if(!terms.length)return[];
+  const brandCandidates=[];
+  for(const d of deviceTypes){
+    for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug))){
+      brandCandidates.push({type:"Marka destek merkezi",title:`${b.name} ${d.name}`,description:"Resmî destek · kılavuz · sürücü/yazılım · yetkili servis",url:pathForBrand(d.slug,b.slug),hay:`${b.name} ${d.name} destek kullanıcı kılavuzu driver sürücü yazılım firmware bios yetkili servis garanti hata arıza`});
+    }
+  }
   const candidates=[
     ...issues.map(i=>({type:"Arıza / hata",title:i.title,description:`${i.code} · ${i.short}`,url:pathForIssue(i),hay:[i.title,i.code,i.short,i.meaning,...(i.queryIntents||[]),...(i.manualNotes||[]).flatMap(n=>[n.term,n.explanation]),...(i.parts||[]).map(p=>p.name)].join(" ")})),
-    ...models.map(m=>{const b=brandBySlug.get(m.brand);return{type:"Tam model",title:`${b.name} ${m.name}`,description:"Arızalar · kılavuz · yazılım · resmî destek",url:pathForModel(m),hay:`${b.name} ${m.name} kullanıcı kılavuzu yazılım firmware hata arıza destek`}}),
+    ...models.map(m=>{const b=brandBySlug.get(m.brand);return{type:"Tam model",title:`${b.name} ${m.name}`,description:"Arızalar · kılavuz · yazılım · resmî destek",url:pathForModel(m),hay:`${b.name} ${m.name} kullanıcı kılavuzu yazılım firmware driver sürücü hata arıza destek`}}),
     ...families.map(f=>{const b=brandBySlug.get(f.brand);return{type:"Seri / model ailesi",title:`${b.name} ${f.name}`,description:"Tam cihaz modelleri",url:pathForFamily(f),hay:`${b.name} ${f.name}`}}),
+    ...brandCandidates,
     ...deviceTypes.map(d=>({type:"Cihaz türü",title:d.name,description:d.description,url:pathForDeviceType(d),hay:`${d.name} ${d.description}`}))
   ];
-  return candidates.map(x=>{const h=normalize(x.hay),t=normalize(x.title);return{...x,score:terms.reduce((s,k)=>s+(t.includes(k)?4:0)+(h.includes(k)?2:0),0)}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,30);
+  return candidates.map(x=>{const h=normalize(x.hay),t=normalize(x.title);return{...x,score:terms.reduce((s,k)=>s+(t.includes(k)?4:0)+(h.includes(k)?2:0),0)}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,40);
 }
 
 function sitemap(){
-  const urls=["/","/kaynak-politikasi/",...deviceTypes.map(pathForDeviceType),...families.map(pathForFamily),...models.map(pathForModel),...issues.map(pathForIssue)];
+  const urls=["/","/kaynak-politikasi/","/servis-garanti-haklari/",...deviceTypes.map(pathForDeviceType),...families.map(pathForFamily),...models.map(pathForModel),...issues.map(pathForIssue)];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug)))urls.push(pathForBrand(d.slug,b.slug));}
   const unique=[...new Set(urls)];
   return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-23</lastmod></url>`).join("")}</urlset>`;
 }
 
 export default {async fetch(request){
-  const url=new URL(request.url),path=decodeURIComponent(url.pathname);if(!["GET","HEAD"].includes(request.method))return new Response("Method Not Allowed",{status:405,headers:securityHeaders(new Headers({allow:"GET, HEAD"}))});if(url.hostname==="www.arizanerede.com")return redirect(`${SITE_ORIGIN}${url.pathname}${url.search}`);
+  const url=new URL(request.url),path=decodeURIComponent(url.pathname);
+  if(!["GET","HEAD"].includes(request.method))return new Response("Method Not Allowed",{status:405,headers:securityHeaders(new Headers({allow:"GET, HEAD"}))});
+  if(url.hostname==="www.arizanerede.com")return redirect(`${SITE_ORIGIN}${url.pathname}${url.search}`);
   if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
-  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.2-device-tree-intents",deviceTypes:deviceTypes.length,brands:brands.length,families:families.length,models:models.length,verifiedIssues:issues.length}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
-  if(path==="/")return html(renderHome());if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());if(path==="/ara"||path==="/ara/"){const q=(url.searchParams.get("q")||"").slice(0,140);return html(renderSearch(q,search(q)));}
+  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.3-expanded-support-scooter",deviceTypes:deviceTypes.length,brands:brands.length,supportOnlyBrands:brands.filter(b=>b.catalogStatus==="support-only").length,families:families.length,models:models.length,verifiedIssues:issues.length}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
+  if(path==="/")return html(renderHome());
+  if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());
+  if(path==="/servis-garanti-haklari"||path==="/servis-garanti-haklari/")return html(renderServiceRights());
+  if(path==="/ara"||path==="/ara/"){const q=(url.searchParams.get("q")||"").slice(0,140);return html(renderSearch(q,search(q)));}
   const p=path.split("/").filter(Boolean);
   if(p.length===1){const d=deviceTypeBySlug.get(p[0]);return d?html(renderDeviceType(d)):html(render404(),404)}
   if(p.length===2){const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]);return d&&b&&b.deviceTypes.includes(d.slug)?html(renderBrand(d,b)):html(render404(),404)}
