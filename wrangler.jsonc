@@ -11,7 +11,11 @@
   ],
   "vars": {
     "GA_MEASUREMENT_ID": "G-CEBVEYWRRK",
-    "CLARITY_PROJECT_ID": "y723n09w80"
+    "CLARITY_PROJECT_ID": "y723n09w80",
+    "SEARCH_CONSOLE_STATUS": "verified",
+    "BING_WEBMASTER_STATUS": "verified",
+    "YANDEX_WEBMASTER_STATUS": "verified",
+    "ADMIN_ACCESS_READY": "false"
   },
   "observability": {
     "enabled": true,
