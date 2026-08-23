@@ -2,24 +2,40 @@ import app from "./index.js";
 
 const INDEXNOW_KEY = "4263b010f9dddf31bf1b4023a3d6a82d";
 
-function injectOptionalAnalytics(response, env) {
+function analyticsResponse(response, env) {
   const contentType = response.headers.get("content-type") || "";
-  if (!contentType.includes("text/html") || (!env?.GA_MEASUREMENT_ID && !env?.CLARITY_PROJECT_ID)) return response;
+  if (!contentType.includes("text/html")) return response;
 
-  const snippets = [];
-  if (env?.GA_MEASUREMENT_ID) {
-    const id = String(env.GA_MEASUREMENT_ID).replace(/[^A-Za-z0-9-]/g, "");
-    if (id) snippets.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${id}',{'anonymize_ip':true});</script>`);
+  const ga = String(env?.GA_MEASUREMENT_ID || "").replace(/[^A-Za-z0-9-]/g, "");
+  const clarity = String(env?.CLARITY_PROJECT_ID || "").replace(/[^A-Za-z0-9]/g, "");
+  if (!ga && !clarity) return response;
+
+  const scripts = [];
+  const scriptSrc = ["'unsafe-inline'"];
+  const connectSrc = ["'self'"];
+  const imgSrc = ["'self'", "data:"];
+
+  if (ga) {
+    scriptSrc.push("https://www.googletagmanager.com");
+    connectSrc.push("https://www.google-analytics.com", "https://region1.google-analytics.com", "https://www.googletagmanager.com");
+    imgSrc.push("https://www.google-analytics.com");
+    scripts.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${ga}"></script><script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga}',{'anonymize_ip':true});</script>`);
   }
-  if (env?.CLARITY_PROJECT_ID) {
-    const id = String(env.CLARITY_PROJECT_ID).replace(/[^A-Za-z0-9]/g, "");
-    if (id) snippets.push(`<script>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","${id}");</script>`);
+
+  if (clarity) {
+    scriptSrc.push("https://www.clarity.ms");
+    connectSrc.push("https://www.clarity.ms", "https://*.clarity.ms");
+    imgSrc.push("https://www.clarity.ms", "https://*.clarity.ms");
+    scripts.push(`<script>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y)})(window,document,"clarity","script","${clarity}");</script>`);
   }
-  if (!snippets.length) return response;
+
+  const headers = new Headers(response.headers);
+  headers.set("content-security-policy", `default-src 'self'; style-src 'unsafe-inline'; script-src ${scriptSrc.join(" ")}; img-src ${imgSrc.join(" ")}; connect-src ${connectSrc.join(" ")}; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests`);
+  const secured = new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 
   return new HTMLRewriter()
-    .on("head", { element(el) { el.append(snippets.join(""), { html: true }); } })
-    .transform(response);
+    .on("head", { element(el) { el.append(scripts.join(""), { html: true }); } })
+    .transform(secured);
 }
 
 export default {
@@ -36,6 +52,6 @@ export default {
     }
 
     const response = await app.fetch(request, env, ctx);
-    return injectOptionalAnalytics(response, env);
+    return analyticsResponse(response, env);
   }
 };
