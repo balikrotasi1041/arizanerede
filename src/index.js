@@ -4,6 +4,7 @@ import {
   pathForDeviceType, pathForBrand, pathForFamily, pathForModel, pathForIssue, normalize
 } from "./catalog.js";
 import { renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch, renderPolicy, renderServiceRights, render404 } from "./ui.js";
+import { renderAdminLocked,renderAdminDashboard,renderSeoRadar,renderDataHealth } from "./admin-dashboard.js";
 
 const BLOCKED_IPS = new Set([
   "130.12.180.39",
@@ -33,27 +34,26 @@ function securityResponse(status){
 function clientIp(request){return String(request.headers.get("CF-Connecting-IP")||"").trim()}
 function normalizedProbePath(pathname){
   let value=String(pathname||"/");
-  for(let pass=0;pass<2;pass+=1){
-    try{const decoded=decodeURIComponent(value);if(decoded===value)break;value=decoded}catch{break}
-  }
+  for(let pass=0;pass<2;pass+=1){try{const decoded=decodeURIComponent(value);if(decoded===value)break;value=decoded}catch{break}}
   return value.replace(/\\/g,"/").replace(/\/{2,}/g,"/");
 }
-function isSensitiveScanPath(pathname){
-  const normalized=normalizedProbePath(pathname);
-  return SENSITIVE_SCAN_PATTERNS.some(pattern=>pattern.test(normalized));
-}
+function isSensitiveScanPath(pathname){const normalized=normalizedProbePath(pathname);return SENSITIVE_SCAN_PATTERNS.some(pattern=>pattern.test(normalized));}
 function html(body,status=200){return new Response(body,{status,headers:securityHeaders(new Headers({"content-type":"text/html; charset=utf-8","cache-control":"public, max-age=0, s-maxage=600"}))})}
+function adminHtml(body,status=200){return new Response(body,{status,headers:securityHeaders(new Headers({"content-type":"text/html; charset=utf-8","cache-control":"private, no-store","x-robots-tag":"noindex, nofollow, noarchive, nosnippet"}))})}
 function redirect(location){return new Response(null,{status:308,headers:securityHeaders(new Headers({location}))})}
 function xmlEscape(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&apos;")}
+function isAdminPath(path){return path==="/admin"||path==="/admin/"||path.startsWith("/admin/")}
+function adminSession(request,env){
+  if(env?.ADMIN_ACCESS_READY!=="true")return null;
+  const jwt=String(request.headers.get("Cf-Access-Jwt-Assertion")||"");
+  if(!jwt)return null;
+  return {email:String(request.headers.get("Cf-Access-Authenticated-User-Email")||"Cloudflare Access kullanıcısı")};
+}
 
 function search(q){
   const terms=normalize(q).split(" ").filter(Boolean);if(!terms.length)return[];
   const brandCandidates=[];
-  for(const d of deviceTypes){
-    for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug))){
-      brandCandidates.push({type:"Marka destek merkezi",title:`${b.name} ${d.name}`,description:"Resmî destek · kılavuz · sürücü/yazılım · yetkili servis",url:pathForBrand(d.slug,b.slug),hay:`${b.name} ${d.name} destek kullanıcı kılavuzu driver sürücü yazılım firmware bios yetkili servis garanti hata arıza`});
-    }
-  }
+  for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug))){brandCandidates.push({type:"Marka destek merkezi",title:`${b.name} ${d.name}`,description:"Resmî destek · kılavuz · sürücü/yazılım · yetkili servis",url:pathForBrand(d.slug,b.slug),hay:`${b.name} ${d.name} destek kullanıcı kılavuzu driver sürücü yazılım firmware bios yetkili servis garanti hata arıza`});}}
   const candidates=[
     ...issues.map(i=>({type:"Arıza / hata",title:i.title,description:`${i.code} · ${i.short}`,url:pathForIssue(i),hay:[i.title,i.code,i.short,i.meaning,...(i.queryIntents||[]),...(i.manualNotes||[]).flatMap(n=>[n.term,n.explanation]),...(i.parts||[]).map(p=>p.name)].join(" ")})),
     ...models.map(m=>{const b=brandBySlug.get(m.brand);return{type:"Tam model",title:`${b.name} ${m.name}`,description:"Arızalar · kılavuz · yazılım · resmî destek",url:pathForModel(m),hay:`${b.name} ${m.name} kullanıcı kılavuzu yazılım firmware driver sürücü hata arıza destek`}}),
@@ -68,24 +68,31 @@ function sitemap(){
   const urls=["/","/kaynak-politikasi/","/servis-garanti-haklari/",...deviceTypes.map(pathForDeviceType),...families.map(pathForFamily),...models.map(pathForModel),...issues.map(pathForIssue)];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug)))urls.push(pathForBrand(d.slug,b.slug));}
   const unique=[...new Set(urls)];
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-23</lastmod></url>`).join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-24</lastmod></url>`).join("")}</urlset>`;
 }
 
-export default {async fetch(request){
-  const ip=clientIp(request);
-  if(BLOCKED_IPS.has(ip))return securityResponse(403);
-
+export default {async fetch(request,env={}){
+  const ip=clientIp(request);if(BLOCKED_IPS.has(ip))return securityResponse(403);
   const url=new URL(request.url);
   if(request.method==="TRACE")return securityResponse(405);
-  if(isSensitiveScanPath(url.pathname))return securityResponse(404);
+  if(isSensitiveScanPath(url.pathname)&&!url.pathname.startsWith("/admin/"))return securityResponse(404);
   if(!["GET","HEAD"].includes(request.method))return securityResponse(405);
-
-  let path;
-  try{path=decodeURIComponent(url.pathname)}catch{return securityResponse(400)}
+  let path;try{path=decodeURIComponent(url.pathname)}catch{return securityResponse(400)}
   if(url.hostname==="www.arizanerede.com")return redirect(`${SITE_ORIGIN}${url.pathname}${url.search}`);
-  if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
+
+  if(isAdminPath(path)){
+    if(env?.ADMIN_ACCESS_READY!=="true")return adminHtml(renderAdminLocked(),403);
+    const session=adminSession(request,env);if(!session)return securityResponse(403);
+    if(path==="/admin"||path==="/admin/")return redirect(`${SITE_ORIGIN}/admin/dashboard/`);
+    if(path==="/admin/dashboard"||path==="/admin/dashboard/")return adminHtml(renderAdminDashboard(env,session.email));
+    if(path==="/admin/seo-radar"||path==="/admin/seo-radar/")return adminHtml(renderSeoRadar(session.email));
+    if(path==="/admin/data-health"||path==="/admin/data-health/")return adminHtml(renderDataHealth(session.email));
+    return adminHtml(render404(),404);
+  }
+
+  if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
-  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.3-expanded-support-scooter",deviceTypes:deviceTypes.length,brands:brands.length,supportOnlyBrands:brands.filter(b=>b.catalogStatus==="support-only").length,families:families.length,models:models.length,verifiedIssues:issues.length}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
+  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.4-admin-dashboard",deviceTypes:deviceTypes.length,brands:brands.length,supportOnlyBrands:brands.filter(b=>b.catalogStatus==="support-only").length,families:families.length,models:models.length,verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
   if(path==="/")return html(renderHome());
   if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());
   if(path==="/servis-garanti-haklari"||path==="/servis-garanti-haklari/")return html(renderServiceRights());
