@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "check": "node scripts/verify-data.mjs && wrangler deploy --dry-run"
+    "validate:security": "node scripts/verify-security.mjs",
+    "check": "node scripts/verify-data.mjs && npm run validate:security && wrangler deploy --dry-run"
   },
   "devDependencies": {
     "wrangler": "^4.125.0"
