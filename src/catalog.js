@@ -1,5 +1,6 @@
 import * as base from "./data.js";
 import { extraDeviceTypes, extraBrands, legalResources } from "./catalog-expansion.js";
+import { scooterFamilies, scooterModels } from "./catalog-scooters.js";
 
 function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.set(keyFn(item),item);return [...map.values()];}
 
@@ -17,12 +18,14 @@ for(const extra of extraBrands){
     trustLevel:"brand-official"
   });
 }
+const onvo=mergedBrands.get("onvo");
+if(onvo) mergedBrands.set("onvo",{...onvo,completeDeviceTypes:[...new Set([...(onvo.completeDeviceTypes||[]),"elektrikli-scooter"])]});
 export const brands=[...mergedBrands.values()];
 
-// Yeni kategorilerde seri/model ağacı ancak marka-kategori kataloğu tamamlandığında yayımlanır.
-// Bu nedenle mevcut doğrulanmış seri/model/sorun kayıtları korunur, support-only markalarda hayalî aile/model üretilmez.
-export const families=base.families;
-export const models=base.models;
+// Yeni kategorilerde seri/model ağacı ancak marka-kategori kataloğu resmî kaynakla doğrulandığında yayımlanır.
+// ONVO elektrikli scooter dalı, markanın Bilgi Merkezi envanterinden doğrulanan ilk geniş katalogdur.
+export const families=uniqueBy([...base.families,...scooterFamilies],x=>`${x.deviceType}/${x.brand}/${x.slug}`);
+export const models=uniqueBy([...base.models,...scooterModels],x=>`${x.deviceType}/${x.brand}/${x.family}/${x.slug}`);
 export const issues=base.issues;
 
 export const SITE_ORIGIN=base.SITE_ORIGIN;
@@ -48,7 +51,7 @@ export const pathForIssue=base.pathForIssue;
 export function isCatalogComplete(deviceType,brand){
   const b=brandBySlug.get(brand);
   if(!b||!b.deviceTypes?.includes(deviceType))return false;
-  return b.catalogStatus==="complete";
+  return b.catalogStatus==="complete"||b.completeDeviceTypes?.includes(deviceType);
 }
 
 export function supportLinksForBrand(brand){
