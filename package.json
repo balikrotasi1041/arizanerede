@@ -1,13 +1,14 @@
 {
   "name": "arizanerede",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "validate:security": "node scripts/verify-security.mjs",
-    "check": "node scripts/verify-data.mjs && npm run validate:security && wrangler deploy --dry-run"
+    "validate:discovery": "node scripts/verify-discovery.mjs",
+    "check": "node scripts/verify-data.mjs && npm run validate:security && npm run validate:discovery && wrangler deploy --dry-run"
   },
   "devDependencies": {
     "wrangler": "^4.125.0"
