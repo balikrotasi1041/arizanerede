@@ -5,8 +5,42 @@ import {
 } from "./catalog.js";
 import { renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch, renderPolicy, renderServiceRights, render404 } from "./ui.js";
 
+const BLOCKED_IPS = new Set([
+  "130.12.180.39",
+  "43.228.157.197",
+  "158.69.55.82",
+  "158.69.55.148",
+]);
+
+const SENSITIVE_SCAN_PATTERNS = [
+  /^\/(?:(?:\$\([^/]{1,64}\)\/)?\.env(?:\.[^/]*)?|\.git(?:\/|$)|\.svn(?:\/|$)|\.hg(?:\/|$))/i,
+  /^\/(?:wp-admin(?:\/|$)|wp-login\.php$|wp-config\.php$|xmlrpc\.php$)/i,
+  /^\/(?:phpmyadmin(?:\/|$)|adminer(?:\.php|\/|$)|phpinfo\.php$|info\.php$|server-status(?:\/|$))/i,
+  /^\/(?:appsettings(?:\.[^/]+)?\.json$|app\.config$|web\.config$|\.DS_Store$)/i,
+  /^\/(?:vendor\/phpunit(?:\/|$)|composer\.(?:json|lock)$|package-lock\.json$|yarn\.lock$|pnpm-lock\.yaml$)/i,
+  /^\/(?:backup(?:[-_.][^/]*)?\.(?:sql|tgz|zip|tar(?:\.gz)?)|dump(?:[-_.][^/]*)?\.sql|export\.sql)$/i,
+  /^\/(?:rails\/info\/properties|jenkinsfile|log4j(?:2)?\.properties|cron\.log)$/i,
+  /^\/(?:admin|administrator|cpanel|webmail)(?:\/|$)/i,
+];
+
 function securityHeaders(headers=new Headers()){
   headers.set("strict-transport-security","max-age=31536000; includeSubDomains");headers.set("x-content-type-options","nosniff");headers.set("referrer-policy","strict-origin-when-cross-origin");headers.set("x-frame-options","DENY");headers.set("cross-origin-opener-policy","same-origin");headers.set("permissions-policy","camera=(), microphone=(), geolocation=()");headers.set("content-security-policy","default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests");return headers;
+}
+function securityResponse(status){
+  const headers=securityHeaders(new Headers({"cache-control":"private, no-store","x-robots-tag":"noindex, nofollow, noarchive, nosnippet"}));
+  return new Response(null,{status,headers});
+}
+function clientIp(request){return String(request.headers.get("CF-Connecting-IP")||"").trim()}
+function normalizedProbePath(pathname){
+  let value=String(pathname||"/");
+  for(let pass=0;pass<2;pass+=1){
+    try{const decoded=decodeURIComponent(value);if(decoded===value)break;value=decoded}catch{break}
+  }
+  return value.replace(/\\/g,"/").replace(/\/{2,}/g,"/");
+}
+function isSensitiveScanPath(pathname){
+  const normalized=normalizedProbePath(pathname);
+  return SENSITIVE_SCAN_PATTERNS.some(pattern=>pattern.test(normalized));
 }
 function html(body,status=200){return new Response(body,{status,headers:securityHeaders(new Headers({"content-type":"text/html; charset=utf-8","cache-control":"public, max-age=0, s-maxage=600"}))})}
 function redirect(location){return new Response(null,{status:308,headers:securityHeaders(new Headers({location}))})}
@@ -38,8 +72,16 @@ function sitemap(){
 }
 
 export default {async fetch(request){
-  const url=new URL(request.url),path=decodeURIComponent(url.pathname);
-  if(!["GET","HEAD"].includes(request.method))return new Response("Method Not Allowed",{status:405,headers:securityHeaders(new Headers({allow:"GET, HEAD"}))});
+  const ip=clientIp(request);
+  if(BLOCKED_IPS.has(ip))return securityResponse(403);
+
+  const url=new URL(request.url);
+  if(request.method==="TRACE")return securityResponse(405);
+  if(isSensitiveScanPath(url.pathname))return securityResponse(404);
+  if(!["GET","HEAD"].includes(request.method))return securityResponse(405);
+
+  let path;
+  try{path=decodeURIComponent(url.pathname)}catch{return securityResponse(400)}
   if(url.hostname==="www.arizanerede.com")return redirect(`${SITE_ORIGIN}${url.pathname}${url.search}`);
   if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
