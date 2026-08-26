@@ -7,7 +7,8 @@ import { computingFamilies,computingModels } from "./catalog-data/computing.js";
 import { displayPrintFamilies,displayPrintModels } from "./catalog-data/display-print.js";
 import { climateMobilityFamilies,climateMobilityModels } from "./catalog-data/climate-mobility.js";
 import { refreshBrands,refreshFamilies,refreshModels } from "./catalog-data/market-refresh-2026-08.js";
-import { buildSymptomClusters,VERIFIED_AT } from "./catalog-data/helpers.js";
+import { VERIFIED_AT } from "./catalog-data/helpers.js";
+import { buildExpandedSymptomClusters,mergeSymptomClusters,ISSUE_QUALITY_MIN } from "./catalog-data/issue-taxonomy.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
 
 function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.set(keyFn(item),item);return [...map.values()];}
@@ -34,6 +35,8 @@ const expandedModels=[...base.models,...scooterModels,...homeModels,...computing
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
+  const researched=buildExpandedSymptomClusters(model,sourceUrl,`${model.name} resmî kılavuz / destek`);
+  const mergedSymptoms=mergeSymptomClusters(researched,model.symptomClusters||[]);
   return {
     ...model,
     modelCode:model.modelCode||model.name,
@@ -41,7 +44,8 @@ export const models=uniqueBy(expandedModels.map(model=>{
     verifiedAt:model.verifiedAt||VERIFIED_AT,
     verificationLevel:model.verificationLevel||"official-model-source",
     marketSource:model.marketSource||(market?{label:"Akakçe Türkiye kategori envanteri keşfi",url:market.sourceUrl,role:"market-discovery-only"}:undefined),
-    symptomClusters:model.symptomClusters?.length?model.symptomClusters:buildSymptomClusters(model.deviceType,sourceUrl,`${model.name} resmî kılavuz / destek`)
+    symptomClusters:mergedSymptoms,
+    issueCoverage:{researchedClusters:mergedSymptoms.length,qualityMinimum:ISSUE_QUALITY_MIN,passesMinimum:mergedSymptoms.length>=ISSUE_QUALITY_MIN}
   };
 }),x=>`${x.deviceType}/${x.brand}/${x.family}/${x.slug}`);
 export const issues=base.issues;
@@ -52,7 +56,7 @@ export const SERBIS_URL=base.SERBIS_URL;
 export const PROVINCES=base.PROVINCES;
 export const escalationRoutes=base.escalationRoutes;
 export const normalize=base.normalize;
-export { legalResources,marketInventory,marketInventoryByDevice };
+export { legalResources,marketInventory,marketInventoryByDevice,ISSUE_QUALITY_MIN };
 
 export const deviceTypeBySlug=new Map(deviceTypes.map(x=>[x.slug,x]));
 export const brandBySlug=new Map(brands.map(x=>[x.slug,x]));
@@ -76,7 +80,7 @@ const httpsUrl=value=>typeof value==="string"&&value.startsWith("https://");
 export function isModelIndexable(model){
   return model?.indexable!==false&&httpsUrl(model?.supportUrl)&&httpsUrl(model?.manualUrl)&&
     typeof model?.modelCode==="string"&&model.modelCode.trim().length>0&&
-    typeof model?.verifiedAt==="string"&&(model.symptomClusters||[]).length>0&&
+    typeof model?.verifiedAt==="string"&&(model.symptomClusters||[]).length>=ISSUE_QUALITY_MIN&&
     model.symptomClusters.every(cluster=>cluster.title&&cluster.summary&&cluster.stopWhen&&cluster.safety&&httpsUrl(cluster.source?.url));
 }
 export const indexableModels=models.filter(isModelIndexable);
