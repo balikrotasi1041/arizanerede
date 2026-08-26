@@ -1,4 +1,4 @@
-export const VERIFIED_AT="2026-08-25";
+export const VERIFIED_AT="2026-08-26";
 
 export function slugify(value=""){
   return String(value).toLocaleLowerCase("tr-TR").normalize("NFD")
