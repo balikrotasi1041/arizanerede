@@ -29,7 +29,7 @@ jobs:
           let verified = false;
           for (let attempt = 1; attempt <= 18; attempt++) {
             try {
-              const response = await fetch(keyLocation, { cache: 'no-store' });
+              const response = await fetch(keyLocation, { cache: 'no-store', signal: AbortSignal.timeout(10000) });
               const text = (await response.text()).trim();
               if (response.ok && text === key) {
                 verified = true;
@@ -40,7 +40,7 @@ jobs:
           }
           if (!verified) throw new Error(`IndexNow key is not live at ${keyLocation}`);
 
-          const sitemapResponse = await fetch(`${origin}/sitemap.xml`, { cache: 'no-store' });
+          const sitemapResponse = await fetch(`${origin}/sitemap.xml`, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
           if (!sitemapResponse.ok) throw new Error(`Sitemap fetch failed: ${sitemapResponse.status}`);
           const xml = await sitemapResponse.text();
           const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1].replaceAll('&amp;', '&'));
@@ -59,13 +59,18 @@ jobs:
           ];
           const results = [];
           for (const [name, endpoint] of endpoints) {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json; charset=utf-8' },
-              body: payload
-            });
-            const body = await response.text();
-            results.push({ name, status: response.status, accepted: [200, 202].includes(response.status), body });
+            try {
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json; charset=utf-8' },
+                body: payload,
+                signal: AbortSignal.timeout(20000)
+              });
+              const body = await response.text();
+              results.push({ name, status: response.status, accepted: [200, 202].includes(response.status), body });
+            } catch (error) {
+              results.push({ name, status: 'network-error', accepted: false, body: error.message });
+            }
           }
           for (const result of results) {
             console.log(`${result.name}: ${result.status}${result.body ? ` ${result.body}` : ''}`);
