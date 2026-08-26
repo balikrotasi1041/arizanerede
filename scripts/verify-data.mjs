@@ -61,7 +61,7 @@ for(const i of issues){
 }
 if(PROVINCES.length!==81) errors.push(`İl sayısı 81 değil: ${PROVINCES.length}`);
 if(marketInventory.length!==deviceTypes.length) errors.push(`Pazar keşif kaydı kategori sayısıyla eşleşmiyor: ${marketInventory.length}/${deviceTypes.length}`);
-for(const market of marketInventory)if(!/https:\/\/www\.akakce\.com\//.test(market.sourceUrl)||market.observedAt!=="2026-08-25")errors.push(`Pazar keşif kaydı geçersiz: ${market.deviceType}`);
+for(const market of marketInventory)if(!/https:\/\/www\.akakce\.com\//.test(market.sourceUrl)||market.observedAt!=="2026-08-26")errors.push(`Pazar keşif kaydı geçersiz: ${market.deviceType}`);
 if(indexableModels.length!==models.length) errors.push(`Yayın koşulunu karşılamayan model var: ${indexableModels.length}/${models.length}`);
 if(indexableFamilies.length!==families.length) errors.push(`Modeli olmayan aile var: ${indexableFamilies.length}/${families.length}`);
 if(errors.length){console.error(errors.join("\n"));process.exit(1);}
