@@ -15,6 +15,8 @@
     "SEARCH_CONSOLE_STATUS": "verified",
     "BING_WEBMASTER_STATUS": "verified",
     "YANDEX_WEBMASTER_STATUS": "verified",
+    "INDEXNOW_YANDEX_STATUS": "accepted-2026-08-26-564-urls",
+    "INDEXNOW_BING_STATUS": "forbidden-site-verification-2026-08-26",
     "ADMIN_ACCESS_READY": "false"
   },
   "observability": {
