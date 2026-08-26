@@ -1,5 +1,5 @@
 export const SITE_ORIGIN = "https://arizanerede.com";
-export const LAST_VERIFIED = "2026-08-23";
+export const LAST_VERIFIED = "2026-08-25";
 export const SERBIS_URL = "https://www.servis.gov.tr/Genel/Sorgu";
 
 export const PROVINCES = [
