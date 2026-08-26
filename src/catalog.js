@@ -6,6 +6,7 @@ import { homeFamilies,homeModels } from "./catalog-data/home.js";
 import { computingFamilies,computingModels } from "./catalog-data/computing.js";
 import { displayPrintFamilies,displayPrintModels } from "./catalog-data/display-print.js";
 import { climateMobilityFamilies,climateMobilityModels } from "./catalog-data/climate-mobility.js";
+import { refreshBrands,refreshFamilies,refreshModels } from "./catalog-data/market-refresh-2026-08.js";
 import { buildSymptomClusters,VERIFIED_AT } from "./catalog-data/helpers.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
 
@@ -14,7 +15,7 @@ function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.s
 export const deviceTypes=uniqueBy([...base.deviceTypes,...extraDeviceTypes],x=>x.slug);
 
 const mergedBrands=new Map(base.brands.map(b=>[b.slug,{...b,catalogStatus:b.catalogStatus||"partial-verified",trustLevel:b.trustLevel||"brand-official"}]));
-for(const extra of [...extraBrands,...marketBrands]){
+for(const extra of [...extraBrands,...marketBrands,...refreshBrands]){
   const current=mergedBrands.get(extra.slug);
   if(!current){mergedBrands.set(extra.slug,extra);continue;}
   mergedBrands.set(extra.slug,{
@@ -27,9 +28,9 @@ for(const extra of [...extraBrands,...marketBrands]){
 }
 export const brands=[...mergedBrands.values()];
 
-const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies];
+const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies];
 export const families=uniqueBy(expandedFamilies,x=>`${x.deviceType}/${x.brand}/${x.slug}`);
-const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels];
+const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels];
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
