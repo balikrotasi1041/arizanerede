@@ -69,7 +69,7 @@ function sitemap(){
   const urls=["/","/kaynak-politikasi/","/servis-garanti-haklari/",...deviceTypes.map(pathForDeviceType),...indexableFamilies.map(pathForFamily),...indexableModels.map(pathForModel),...issues.map(pathForIssue)];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,x.slug)))urls.push(pathForBrand(d.slug,b.slug));}
   const unique=[...new Set(urls)];
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-25</lastmod></url>`).join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-26</lastmod></url>`).join("")}</urlset>`;
 }
 
 export default {async fetch(request,env={}){
@@ -93,7 +93,7 @@ export default {async fetch(request,env={}){
 
   if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
-  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.5-catalog-expansion",deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
+  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.6-market-refresh",deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
   if(path==="/")return html(renderHome());
   if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());
   if(path==="/servis-garanti-haklari"||path==="/servis-garanti-haklari/")return html(renderServiceRights());
