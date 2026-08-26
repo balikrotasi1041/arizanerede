@@ -1,7 +1,7 @@
 import app from "../src/index.js";
 import {
   SITE_ORIGIN,deviceTypes,brands,indexableFamilies,indexableModels,issues,
-  pathForDeviceType,pathForBrand,pathForFamily,pathForModel,pathForIssue
+  pathForDeviceType,pathForBrand,pathForFamily,pathForModel,pathForIssue,ISSUE_QUALITY_MIN
 } from "../src/catalog.js";
 import {adminMetrics} from "../src/admin-dashboard.js";
 
@@ -27,7 +27,9 @@ for(const model of indexableModels){
   expect(response.status===200,`Model rotası başarısız: ${path}`);
   expect(text.includes(`<link rel="canonical" href="${SITE_ORIGIN}${path}">`),`Model canonical eksik: ${path}`);
   expect(!text.includes('name="robots" content="noindex'),`Yayınlanan model noindex olmamalı: ${path}`);
-  expect(text.includes("Doğrulanmış arıza ve belirti kümeleri"),`Model belirti kapsamı görünmüyor: ${path}`);
+  expect(text.includes("araştırılmış sorun alanı"),`Model sorun kapsamı sayacı görünmüyor: ${path}`);
+  expect(text.includes("Bu model için araştırılmış yaygın arıza ve belirti alanları"),`Model geniş sorun kapsamı görünmüyor: ${path}`);
+  expect((model.symptomClusters||[]).length>=ISSUE_QUALITY_MIN,`Model sorun kapsamı kalite eşiğinin altında: ${path}`);
   expect(text.includes("Resmî yetkili servis / onarım kanalı"),`Model resmî servis yönü görünmüyor: ${path}`);
   expect(text.includes("Pazar keşfi · destek kaynağı değildir"),`Akakçe kaynak rolü ayrıştırılmamış: ${path}`);
   expect(!PLACEHOLDER.test(text),`Model sayfasında placeholder var: ${path}`);
@@ -83,4 +85,4 @@ const dashboardText=await dashboard.text();
 expect(dashboard.status===200&&dashboardText.includes("Support-only kalan marka"),"Yetkili admin dashboard gerçek kapsamı göstermiyor");
 
 if(errors.length){for(const error of errors)console.error(`ROTA HATASI: ${error}`);process.exit(1)}
-console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası; sitemap, arama, health ve admin fail-closed çalışıyor.`);
+console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası; geniş sorun kapsamı, sitemap, arama, health ve admin fail-closed çalışıyor.`);
