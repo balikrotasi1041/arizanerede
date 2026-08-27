@@ -12,12 +12,30 @@ const BLOCKED_IPS = new Set([
   "43.228.157.197",
   "158.69.55.82",
   "158.69.55.148",
+  "34.24.16.181",
+  "45.148.10.247",
+  "45.148.10.244",
+  "93.123.109.166",
+  "93.123.109.165",
+  "195.178.110.103",
+  "195.178.110.132",
+  "195.178.110.101",
+  "195.178.110.155",
 ]);
 
+const BLOCKED_ASNS = new Set([48090]);
+
 const SENSITIVE_SCAN_PATTERNS = [
-  /^\/(?:(?:\$\([^/]{1,64}\)\/)?\.env(?:\.[^/]*)?|\.git(?:\/|$)|\.svn(?:\/|$)|\.hg(?:\/|$))/i,
+  /^\/(?:[^/]+\/)*(?:\.env(?:\.[^/]+)?(?:\/|$)|\.git(?:\/|$)|\.svn(?:\/|$)|\.hg(?:\/|$))/i,
+  /^\/(?:wp|wordpress)(?:\/|$)/i,
+  /^\/(?:blog\/)?wp-json(?:\/|$)/i,
   /^\/(?:wp-admin(?:\/|$)|wp-login\.php$|wp-config\.php$|xmlrpc\.php$)/i,
+  /^\/(?:[^/]+\/)*[^/]+\.php(?:\/|$)/i,
+  /^\/auth\/callback(?:\/|$)/i,
   /^\/(?:phpmyadmin(?:\/|$)|adminer(?:\.php|\/|$)|phpinfo\.php$|info\.php$|server-status(?:\/|$))/i,
+  /^\/(?:console|cgi-bin|actuator|server-info|WEB-INF|\.aws)(?:\/|$)/i,
+  /^\/key\/info$/i,
+  /^\/(?:next\.config\.(?:js|mjs|ts)|nuxt\.config\.(?:js|ts)|vite\.config\.(?:js|ts))$/i,
   /^\/(?:appsettings(?:\.[^/]+)?\.json$|app\.config$|web\.config$|\.DS_Store$)/i,
   /^\/(?:vendor\/phpunit(?:\/|$)|composer\.(?:json|lock)$|package-lock\.json$|yarn\.lock$|pnpm-lock\.yaml$)/i,
   /^\/(?:backup(?:[-_.][^/]*)?\.(?:sql|tgz|zip|tar(?:\.gz)?)|dump(?:[-_.][^/]*)?\.sql|export\.sql)$/i,
@@ -33,6 +51,7 @@ function securityResponse(status){
   return new Response(null,{status,headers});
 }
 function clientIp(request){return String(request.headers.get("CF-Connecting-IP")||"").trim()}
+function clientAsn(request){const asn=Number(request?.cf?.asn);return Number.isFinite(asn)?asn:0}
 function normalizedProbePath(pathname){
   let value=String(pathname||"/");
   for(let pass=0;pass<2;pass+=1){try{const decoded=decodeURIComponent(value);if(decoded===value)break;value=decoded}catch{break}}
@@ -69,11 +88,12 @@ function sitemap(){
   const urls=["/","/kaynak-politikasi/","/servis-garanti-haklari/",...deviceTypes.map(pathForDeviceType),...indexableFamilies.map(pathForFamily),...indexableModels.map(pathForModel),...issues.map(pathForIssue)];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,x.slug)))urls.push(pathForBrand(d.slug,b.slug));}
   const unique=[...new Set(urls)];
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-26</lastmod></url>`).join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-27</lastmod></url>`).join("")}</urlset>`;
 }
 
 export default {async fetch(request,env={}){
   const ip=clientIp(request);if(BLOCKED_IPS.has(ip))return securityResponse(403);
+  const asn=clientAsn(request);if(BLOCKED_ASNS.has(asn))return securityResponse(403);
   const url=new URL(request.url);
   if(request.method==="TRACE")return securityResponse(405);
   if(isSensitiveScanPath(url.pathname)&&!url.pathname.startsWith("/admin/"))return securityResponse(404);
@@ -93,7 +113,7 @@ export default {async fetch(request,env={}){
 
   if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
-  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.6-market-refresh",deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
+  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.7-edge-hardening",deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
   if(path==="/")return html(renderHome());
   if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());
   if(path==="/servis-garanti-haklari"||path==="/servis-garanti-haklari/")return html(renderServiceRights());
