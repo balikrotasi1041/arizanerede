@@ -60,7 +60,7 @@ export const issues=uniqueBy(
   x=>`${x.deviceType}/${x.brand}/${x.family}/${x.model}/${x.slug}`
 );
 export function isIssueIndexable(issue){
-  return Boolean(issue)&&Number(issue.seoTier??0)<=SEO_ROLLOUT_STAGE&&
+  return Boolean(issue)&&
     typeof issue.title==="string"&&issue.title.trim().length>0&&
     typeof issue.meaning==="string"&&issue.meaning.trim().length>0&&
     typeof issue.stopWhen==="string"&&issue.stopWhen.trim().length>0&&
