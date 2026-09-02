@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "capturedAt": "2026-09-02",
-  "count": 601,
-  "sha256": "b4117fe3eeeddb48448ad3fc6f458c06a23e86df25f8e8f8f171cd2625808bbc",
-  "policy": "A published/index-target URL set may change only with an explicit contract update. Removed URLs require an intentional redirect or gone decision."
+  "version": 2,
+  "capturedAt": "2026-09-03",
+  "count": 761,
+  "sha256": "0282749ae9c1171ebcd9fd98545306c3d476f72ed0f66426e789bacc33b871b8",
+  "policy": "Every complete public technical issue is an index target. Published URLs may change only with an explicit contract update; removed URLs require an intentional redirect or gone decision."
 }
