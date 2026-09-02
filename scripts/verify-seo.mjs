@@ -1,6 +1,6 @@
 import app from "../src/index.js";
 import {
-  SITE_ORIGIN,SEO_ROLLOUT_STAGE,issues,indexableIssues,indexableModels,indexableEditorialGuides,indexableServiceGuides,
+  SITE_ORIGIN,issues,indexableIssues,indexableModels,indexableEditorialGuides,indexableServiceGuides,
   pathForIssue,pathForModel
 } from "../src/catalog.js";
 import {pathForEditorialGuide,pathForServiceGuide} from "../src/ui.js";
@@ -24,25 +24,17 @@ for(const absolute of sitemapUrls){
   expect(!response.headers.get("x-robots-tag")?.includes("noindex"),`Sitemap URL noindex olamaz: ${path}`);
 }
 
-for(const issue of indexableIssues){
-  expect(sitemapText.includes(`${SITE_ORIGIN}${pathForIssue(issue)}`),`İndekslenebilir arıza sitemap'te yok: ${pathForIssue(issue)}`);
-}
-const staged=issues.filter(issue=>!indexableIssues.includes(issue));
-for(const issue of staged){
-  expect(!sitemapText.includes(`${SITE_ORIGIN}${pathForIssue(issue)}`),`Stage dışı arıza sitemap'e sızdı: ${pathForIssue(issue)}`);
-}
-if(staged[0]){
-  const path=pathForIssue(staged[0]);
+const unpublishedIssues=issues.filter(issue=>!indexableIssues.includes(issue));
+expect(unpublishedIssues.length===0,`Tamamlanmamış veya indeks dışı teknik arıza kaydı kalamaz: ${unpublishedIssues.length}`);
+for(const issue of issues){
+  const path=pathForIssue(issue);
   const response=await get(path);
   const text=await response.text();
-  expect(response.status===200,`Hazır fakat stage dışı içerik erişilebilir olmalı: ${path}`);
-  expect(response.headers.get("x-robots-tag")?.includes("noindex"),`Stage dışı arıza X-Robots-Tag noindex olmalı: ${path}`);
-  expect(text.includes('name="robots" content="noindex,follow"'),`Stage dışı arıza meta robots noindex olmalı: ${path}`);
+  expect(response.status===200,`Arıza sayfası 200 değil: ${path} -> ${response.status}`);
+  expect(sitemapText.includes(`${SITE_ORIGIN}${path}`),`Arıza sitemap'te yok: ${path}`);
+  expect(!response.headers.get("x-robots-tag")?.includes("noindex"),`Arıza X-Robots-Tag noindex olamaz: ${path}`);
+  expect(!text.includes('name="robots" content="noindex'),`Arıza meta robots noindex olamaz: ${path}`);
 }
-
-const generatedIndexable=indexableIssues.filter(issue=>issue.generatedFrom==="official-model-specific-cluster");
-const STAGE_ONE_NEW_ISSUE_BUDGET=48;
-if(SEO_ROLLOUT_STAGE===1)expect(generatedIndexable.length<=STAGE_ONE_NEW_ISSUE_BUDGET,`Stage 1 issue bütçesi aşıldı: ${generatedIndexable.length}/${STAGE_ONE_NEW_ISSUE_BUDGET}`);
 
 for(const guide of indexableEditorialGuides){
   const path=pathForEditorialGuide(guide);
@@ -77,7 +69,5 @@ for(const [brand,name] of protectedModels){
   }
 }
 
-expect(sitemapUrls.length<900,"Kontrollü rollout sırasında sitemap 900 URL sınırını aşmamalı; önce Search Console sindirimini değerlendir.");
-
 if(errors.length){for(const error of errors)console.error(`SEO HATASI: ${error}`);process.exit(1)}
-console.log(`SEO kalite kapısı geçti: stage ${SEO_ROLLOUT_STAGE}, ${sitemapUrls.length} sitemap URL, ${indexableIssues.length} indekslenebilir arıza, ${staged.length} hazır-noindex arıza, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası.`);
+console.log(`SEO kalite kapısı geçti: ${sitemapUrls.length} sitemap URL, ${indexableIssues.length}/${issues.length} teknik arıza indeks hedefinde, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası.`);
