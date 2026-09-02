@@ -1,10 +1,15 @@
 import {
-  SITE_ORIGIN, PROVINCES, deviceTypes, brands, families, models, issues,
-  indexableFamilies,indexableModels,isBrandIndexable,isFamilyIndexable,isModelIndexable,
+  SITE_ORIGIN, PROVINCES, deviceTypes, brands, families, models, issues,indexableIssues,
+  indexableFamilies,indexableModels,isBrandIndexable,isFamilyIndexable,isModelIndexable,isIssueIndexable,
+  indexableEditorialGuides,indexableServiceGuides,editorialGuideBySlug,serviceGuideBySlug,SEO_ROLLOUT_STAGE,
   deviceTypeBySlug, brandBySlug, familyByKey, modelByKey, issueByKey,
   pathForDeviceType, pathForBrand, pathForFamily, pathForModel, pathForIssue, normalize
 } from "./catalog.js";
-import { renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch, renderPolicy, renderServiceRights, render404 } from "./ui.js";
+import {
+  renderHome, renderDeviceType, renderBrand, renderFamily, renderModel, renderIssue, renderSearch,
+  renderPolicy, renderServiceRights, renderEditorialGuide, renderServiceGuide, render404,
+  pathForEditorialGuide,pathForServiceGuide
+} from "./ui.js";
 import { renderAdminLocked,renderAdminDashboard,renderSeoRadar,renderDataHealth } from "./admin-dashboard.js";
 
 const BLOCKED_IPS = new Set([
@@ -74,8 +79,11 @@ function search(q){
   const terms=normalize(q).split(" ").filter(Boolean);if(!terms.length)return[];
   const brandCandidates=[];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug))){brandCandidates.push({type:"Marka destek merkezi",title:`${b.name} ${d.name}`,description:"Resmî destek · kılavuz · sürücü/yazılım · yetkili servis",url:pathForBrand(d.slug,b.slug),hay:`${b.name} ${d.name} destek kullanıcı kılavuzu driver sürücü yazılım firmware bios yetkili servis garanti hata arıza`});}}
+  const guideCandidates=indexableEditorialGuides.map(g=>({type:"Teknik rehber",title:g.title,description:g.description,url:pathForEditorialGuide(g),hay:`${g.title} ${g.description} ${(g.sections||[]).map(x=>`${x.title} ${x.text}`).join(" ")}`}));
+  const serviceCandidates=indexableServiceGuides.map(g=>({type:"Resmî servis rehberi",title:g.title,description:g.description,url:pathForServiceGuide(g),hay:`${g.title} ${g.description} ${g.summary} ${(g.brands||[]).join(" ")} servis yetkili servis teknik destek garanti`}));
   const candidates=[
-    ...issues.map(i=>({type:"Arıza / hata",title:i.title,description:`${i.code} · ${i.short}`,url:pathForIssue(i),hay:[i.title,i.code,i.short,i.meaning,...(i.queryIntents||[]),...(i.manualNotes||[]).flatMap(n=>[n.term,n.explanation]),...(i.parts||[]).map(p=>p.name)].join(" ")})),
+    ...indexableIssues.map(i=>({type:"Arıza / hata",title:i.title,description:`${i.code} · ${i.short}`,url:pathForIssue(i),hay:[i.title,i.code,i.short,i.meaning,...(i.queryIntents||[]),...(i.manualNotes||[]).flatMap(n=>[n.term,n.explanation]),...(i.parts||[]).map(p=>p.name)].join(" ")})),
+    ...guideCandidates,...serviceCandidates,
     ...indexableModels.map(m=>{const b=brandBySlug.get(m.brand);return{type:"Tam model",title:`${b.name} ${m.name}`,description:`${m.symptomClusters.length} doğrulanmış belirti kümesi · kılavuz · yazılım · resmî destek`,url:pathForModel(m),hay:`${b.name} ${m.name} ${m.modelCode} ${(m.symptomClusters||[]).map(c=>`${c.title} ${c.summary}`).join(" ")} kullanıcı kılavuzu yazılım firmware driver sürücü hata arıza destek`}}),
     ...indexableFamilies.map(f=>{const b=brandBySlug.get(f.brand);return{type:"Seri / model ailesi",title:`${b.name} ${f.name}`,description:"Tam cihaz modelleri",url:pathForFamily(f),hay:`${b.name} ${f.name}`}}),
     ...brandCandidates,
@@ -85,10 +93,14 @@ function search(q){
 }
 
 function sitemap(){
-  const urls=["/","/kaynak-politikasi/","/servis-garanti-haklari/",...deviceTypes.map(pathForDeviceType),...indexableFamilies.map(pathForFamily),...indexableModels.map(pathForModel),...issues.map(pathForIssue)];
+  const urls=[
+    "/","/kaynak-politikasi/","/servis-garanti-haklari/",
+    ...deviceTypes.map(pathForDeviceType),...indexableFamilies.map(pathForFamily),...indexableModels.map(pathForModel),...indexableIssues.map(pathForIssue),
+    ...indexableEditorialGuides.map(pathForEditorialGuide),...indexableServiceGuides.map(pathForServiceGuide)
+  ];
   for(const d of deviceTypes){for(const b of brands.filter(x=>x.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,x.slug)))urls.push(pathForBrand(d.slug,b.slug));}
   const unique=[...new Set(urls)];
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-08-27</lastmod></url>`).join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${unique.map(u=>`<url><loc>${SITE_ORIGIN}${xmlEscape(u)}</loc><lastmod>2026-09-02</lastmod></url>`).join("")}</urlset>`;
 }
 
 export default {async fetch(request,env={}){
@@ -113,16 +125,30 @@ export default {async fetch(request,env={}){
 
   if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8"}))});
   if(path==="/sitemap.xml")return new Response(sitemap(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8"}))});
-  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.7-edge-hardening",deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
+  if(path==="/health")return new Response(JSON.stringify({status:"ok",release:"v0.8-controlled-seo-depth",seoRolloutStage:SEO_ROLLOUT_STAGE,deviceTypes:deviceTypes.length,brands:brands.length,indexableBrandPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&isBrandIndexable(d.slug,b.slug)).length,0),supportOnlyPairs:deviceTypes.reduce((n,d)=>n+brands.filter(b=>b.deviceTypes.includes(d.slug)&&!isBrandIndexable(d.slug,b.slug)).length,0),families:families.length,indexableFamilies:indexableFamilies.length,models:models.length,indexableModels:indexableModels.length,symptomClusters:indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),verifiedIssues:issues.length,indexableIssues:indexableIssues.length,stagedIssues:issues.length-indexableIssues.length,indexableEditorialGuides:indexableEditorialGuides.length,indexableServiceGuides:indexableServiceGuides.length,adminAccessReady:env?.ADMIN_ACCESS_READY==="true"}),{headers:securityHeaders(new Headers({"content-type":"application/json; charset=utf-8","cache-control":"no-store"}))});
   if(path==="/")return html(renderHome());
   if(path==="/kaynak-politikasi"||path==="/kaynak-politikasi/")return html(renderPolicy());
   if(path==="/servis-garanti-haklari"||path==="/servis-garanti-haklari/")return html(renderServiceRights());
   if(path==="/ara"||path==="/ara/"){const q=(url.searchParams.get("q")||"").slice(0,140);return html(renderSearch(q,search(q)),200,{noindex:true});}
   const p=path.split("/").filter(Boolean);
+  if(p.length===2&&p[0]==="rehber"){
+    const guide=editorialGuideBySlug.get(p[1]);
+    return guide?html(renderEditorialGuide(guide,{noindex:guide.seoTier>SEO_ROLLOUT_STAGE}),200,{noindex:guide.seoTier>SEO_ROLLOUT_STAGE}):html(render404(),404);
+  }
+  if(p.length===2&&p[0]==="servis"){
+    const guide=serviceGuideBySlug.get(p[1]);
+    return guide?html(renderServiceGuide(guide,{noindex:guide.seoTier>SEO_ROLLOUT_STAGE}),200,{noindex:guide.seoTier>SEO_ROLLOUT_STAGE}):html(render404(),404);
+  }
   if(p.length===1){const d=deviceTypeBySlug.get(p[0]);return d?html(renderDeviceType(d)):html(render404(),404)}
   if(p.length===2){const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]);return d&&b&&b.deviceTypes.includes(d.slug)?html(renderBrand(d,b),200,{noindex:!isBrandIndexable(d.slug,b.slug)}):html(render404(),404)}
   if(p.length===3){const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]),f=familyByKey.get(`${p[0]}/${p[1]}/${p[2]}`);return d&&b&&f?html(renderFamily(d,b,f),200,{noindex:!isFamilyIndexable(f)}):html(render404(),404)}
   if(p.length===4){const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]),f=familyByKey.get(`${p[0]}/${p[1]}/${p[2]}`),m=modelByKey.get(`${p[0]}/${p[1]}/${p[2]}/${p[3]}`);return d&&b&&f&&m?html(renderModel(d,b,f,m),200,{noindex:!isModelIndexable(m)}):html(render404(),404)}
-  if(p.length===5){const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]),f=familyByKey.get(`${p[0]}/${p[1]}/${p[2]}`),m=modelByKey.get(`${p[0]}/${p[1]}/${p[2]}/${p[3]}`),i=issueByKey.get(`${p[0]}/${p[1]}/${p[2]}/${p[3]}/${p[4]}`);const raw=(url.searchParams.get("il")||"Kocaeli").slice(0,40),province=PROVINCES.includes(raw)?raw:"Kocaeli";return d&&b&&f&&m&&i?html(renderIssue(d,b,f,m,i,province)):html(render404(),404)}
+  if(p.length===5){
+    const d=deviceTypeBySlug.get(p[0]),b=brandBySlug.get(p[1]),f=familyByKey.get(`${p[0]}/${p[1]}/${p[2]}`),m=modelByKey.get(`${p[0]}/${p[1]}/${p[2]}/${p[3]}`),i=issueByKey.get(`${p[0]}/${p[1]}/${p[2]}/${p[3]}/${p[4]}`);
+    const raw=(url.searchParams.get("il")||"Kocaeli").slice(0,40),province=PROVINCES.includes(raw)?raw:"Kocaeli";
+    if(!(d&&b&&f&&m&&i))return html(render404(),404);
+    const noindex=!isIssueIndexable(i);
+    return html(renderIssue(d,b,f,m,i,province,{noindex}),200,{noindex});
+  }
   return html(render404(),404);
 }};
