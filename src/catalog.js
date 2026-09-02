@@ -7,9 +7,14 @@ import { computingFamilies,computingModels } from "./catalog-data/computing.js";
 import { displayPrintFamilies,displayPrintModels } from "./catalog-data/display-print.js";
 import { climateMobilityFamilies,climateMobilityModels } from "./catalog-data/climate-mobility.js";
 import { refreshBrands,refreshFamilies,refreshModels } from "./catalog-data/market-refresh-2026-08.js";
+import { seoAdditionFamilies,seoAdditionModels } from "./catalog-data/seo-additions.js";
 import { VERIFIED_AT } from "./catalog-data/helpers.js";
 import { buildExpandedSymptomClusters,mergeSymptomClusters,ISSUE_QUALITY_MIN } from "./catalog-data/issue-taxonomy.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
+import {
+  SEO_ROLLOUT_STAGE,buildStandaloneIssues,editorialGuides,serviceGuides,
+  indexableEditorialGuides,indexableServiceGuides,editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand
+} from "./catalog-data/seo-content.js";
 
 function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.set(keyFn(item),item);return [...map.values()];}
 
@@ -29,9 +34,9 @@ for(const extra of [...extraBrands,...marketBrands,...refreshBrands]){
 }
 export const brands=[...mergedBrands.values()];
 
-const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies];
+const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies];
 export const families=uniqueBy(expandedFamilies,x=>`${x.deviceType}/${x.brand}/${x.slug}`);
-const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels];
+const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels];
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
@@ -48,7 +53,21 @@ export const models=uniqueBy(expandedModels.map(model=>{
     issueCoverage:{researchedClusters:mergedSymptoms.length,qualityMinimum:ISSUE_QUALITY_MIN,passesMinimum:mergedSymptoms.length>=ISSUE_QUALITY_MIN}
   };
 }),x=>`${x.deviceType}/${x.brand}/${x.family}/${x.slug}`);
-export const issues=base.issues;
+
+const generatedIssues=buildStandaloneIssues(models,brands);
+export const issues=uniqueBy(
+  [...generatedIssues,...base.issues.map(issue=>({...issue,seoTier:0,generatedFrom:"editorial-base"}))],
+  x=>`${x.deviceType}/${x.brand}/${x.family}/${x.model}/${x.slug}`
+);
+export function isIssueIndexable(issue){
+  return Boolean(issue)&&Number(issue.seoTier??0)<=SEO_ROLLOUT_STAGE&&
+    typeof issue.title==="string"&&issue.title.trim().length>0&&
+    typeof issue.meaning==="string"&&issue.meaning.trim().length>0&&
+    typeof issue.stopWhen==="string"&&issue.stopWhen.trim().length>0&&
+    typeof issue.safety==="string"&&issue.safety.trim().length>0&&
+    typeof issue.officialSource?.url==="string"&&issue.officialSource.url.startsWith("https://");
+}
+export const indexableIssues=issues.filter(isIssueIndexable);
 
 export const SITE_ORIGIN=base.SITE_ORIGIN;
 export const LAST_VERIFIED=base.LAST_VERIFIED;
@@ -56,7 +75,11 @@ export const SERBIS_URL=base.SERBIS_URL;
 export const PROVINCES=base.PROVINCES;
 export const escalationRoutes=base.escalationRoutes;
 export const normalize=base.normalize;
-export { legalResources,marketInventory,marketInventoryByDevice,ISSUE_QUALITY_MIN };
+export {
+  legalResources,marketInventory,marketInventoryByDevice,ISSUE_QUALITY_MIN,SEO_ROLLOUT_STAGE,
+  editorialGuides,serviceGuides,indexableEditorialGuides,indexableServiceGuides,
+  editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand
+};
 
 export const deviceTypeBySlug=new Map(deviceTypes.map(x=>[x.slug,x]));
 export const brandBySlug=new Map(brands.map(x=>[x.slug,x]));
