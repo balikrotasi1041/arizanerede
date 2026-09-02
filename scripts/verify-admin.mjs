@@ -28,4 +28,6 @@ expect(metrics.categoryRows.every(x=>Number.isFinite(x.models)&&Number.isFinite(
 expect(metrics.gaps.placeholderHits.length===0,`Yayında ${metrics.gaps.placeholderHits.length} placeholder kaydı var`);
 
 if(errors.length){for(const e of errors)console.error(`ADMIN HATASI: ${e}`);process.exit(1)}
+const supportOnly=metrics.gaps.supportOnlyPairs.map(x=>`${x.deviceType}:${x.brandSlug}`).sort();
+console.log(`Support-only açıklar: ${supportOnly.length?supportOnly.join(", "):"yok"}`);
 console.log(`Admin dashboard doğrulandı: ${metrics.counts.deviceTypes} kategori, ${metrics.counts.indexedBrandPairs}/${metrics.counts.brandPairs} modeli olan marka-kategori çifti, ${metrics.counts.indexableModels} model, ${metrics.counts.symptomClusters} belirti, ${metrics.counts.supportOnlyPairs} support-only açık, placeholder=0.`);
