@@ -23,6 +23,8 @@ expect(Number.isFinite(metrics.quality.modelPublishable),"Model yayın metriği 
 expect(Number.isFinite(metrics.quality.symptomCoverage),"Model-belirti kapsam metriği üretilemiyor");
 expect(metrics.counts.symptomClusters>metrics.counts.models,"Belirti kümeleri gerçek model verisinden hesaplanmalı");
 expect(metrics.counts.supportOnlyPairs===metrics.gaps.supportOnlyPairs.length,"Support-only sayacı gerçek açık listesiyle eşleşmeli");
+expect(metrics.counts.supportOnlyPairs===0,`Kamuya açık marka-kategori model borcu kalamaz: ${metrics.counts.supportOnlyPairs}`);
+expect(metrics.counts.indexedBrandPairs===metrics.counts.brandPairs,"Her desteklenen marka-kategori çifti yayımlanabilir model kataloğuna sahip olmalı");
 expect(metrics.categoryRows.length===metrics.counts.deviceTypes,"Her kategori için kapsam satırı üretilmeli");
 expect(metrics.categoryRows.every(x=>Number.isFinite(x.models)&&Number.isFinite(x.supportOnlyPairs)),"Kategori metrikleri sayısal olmalı");
 expect(metrics.gaps.placeholderHits.length===0,`Yayında ${metrics.gaps.placeholderHits.length} placeholder kaydı var`);
