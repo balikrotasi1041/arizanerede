@@ -1,7 +1,7 @@
 {
-  "version": 2,
+  "version": 3,
   "capturedAt": "2026-09-03",
-  "count": 761,
-  "sha256": "0282749ae9c1171ebcd9fd98545306c3d476f72ed0f66426e789bacc33b871b8",
-  "policy": "Every complete public technical issue is an index target. Published URLs may change only with an explicit contract update; removed URLs require an intentional redirect or gone decision."
+  "count": 971,
+  "sha256": "aa1adbac89c88abf82c8ae4744b6d4c6631df3218304a978a72907f6f5fbc1bd",
+  "policy": "Every complete public technical issue, supported brand-category catalog, family and model page is an index target. Published URLs may change only with an explicit contract update; removed URLs require an intentional redirect or gone decision."
 }
