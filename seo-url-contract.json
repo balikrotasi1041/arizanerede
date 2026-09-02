@@ -1,7 +1,7 @@
 {
   "version": 1,
   "capturedAt": "2026-09-02",
-  "count": -1,
-  "sha256": "SET_AFTER_FIRST_CI",
+  "count": 601,
+  "sha256": "b4117fe3eeeddb48448ad3fc6f458c06a23e86df25f8e8f8f171cd2625808bbc",
   "policy": "A published/index-target URL set may change only with an explicit contract update. Removed URLs require an intentional redirect or gone decision."
 }
