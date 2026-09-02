@@ -1,6 +1,7 @@
 import app from "./index.js";
 
 const INDEXNOW_KEY = "4263b010f9dddf31bf1b4023a3d6a82d";
+const ALLOWED_HOSTS = new Set(["arizanerede.com","www.arizanerede.com"]);
 
 function analyticsResponse(request,response,env) {
   const url=new URL(request.url);
@@ -45,9 +46,14 @@ function analyticsResponse(request,response,env) {
   return new HTMLRewriter().on("head", { element(el) { el.append(consentStyle + consentScript, { html: true }); } }).on("body", { element(el) { el.append(consentUi, { html: true }); } }).transform(secured);
 }
 
+function hostRejected(){
+  return new Response(null,{status:421,headers:{"cache-control":"private, no-store","x-robots-tag":"noindex, nofollow, noarchive","x-content-type-options":"nosniff"}});
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (!ALLOWED_HOSTS.has(url.hostname.toLowerCase())) return hostRejected();
     if ((request.method === "GET" || request.method === "HEAD") && url.pathname === `/${INDEXNOW_KEY}.txt`) {
       return new Response(request.method === "HEAD" ? null : `${INDEXNOW_KEY}\n`, {headers:{"content-type":"text/plain; charset=utf-8","cache-control":"public, max-age=86400","x-content-type-options":"nosniff"}});
     }
