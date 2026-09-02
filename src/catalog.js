@@ -8,6 +8,7 @@ import { displayPrintFamilies,displayPrintModels } from "./catalog-data/display-
 import { climateMobilityFamilies,climateMobilityModels } from "./catalog-data/climate-mobility.js";
 import { refreshBrands,refreshFamilies,refreshModels } from "./catalog-data/market-refresh-2026-08.js";
 import { seoAdditionFamilies,seoAdditionModels } from "./catalog-data/seo-additions.js";
+import { gapClosureFamilies,gapClosureModels } from "./catalog-data/support-gap-closure.js";
 import { VERIFIED_AT } from "./catalog-data/helpers.js";
 import { buildExpandedSymptomClusters,mergeSymptomClusters,ISSUE_QUALITY_MIN } from "./catalog-data/issue-taxonomy.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
@@ -34,9 +35,9 @@ for(const extra of [...extraBrands,...marketBrands,...refreshBrands]){
 }
 export const brands=[...mergedBrands.values()];
 
-const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies];
+const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies,...gapClosureFamilies];
 export const families=uniqueBy(expandedFamilies,x=>`${x.deviceType}/${x.brand}/${x.slug}`);
-const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels];
+const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels,...gapClosureModels];
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
