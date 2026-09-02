@@ -1,6 +1,6 @@
 {
   "name": "arizanerede",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@11.19.0",
@@ -12,7 +12,8 @@
     "validate:admin": "node scripts/verify-admin.mjs",
     "validate:routes": "node scripts/verify-routes.mjs",
     "validate:seo": "node scripts/verify-seo.mjs",
-    "check": "node scripts/verify-data.mjs && node scripts/verify-security.mjs && node scripts/verify-discovery.mjs && node scripts/verify-admin.mjs && node scripts/verify-routes.mjs && node scripts/verify-seo.mjs && wrangler deploy --dry-run"
+    "validate:url-contract": "node scripts/verify-url-contract.mjs",
+    "check": "node scripts/verify-data.mjs && node scripts/verify-security.mjs && node scripts/verify-discovery.mjs && node scripts/verify-admin.mjs && node scripts/verify-routes.mjs && node scripts/verify-seo.mjs && node scripts/verify-url-contract.mjs && wrangler deploy --dry-run"
   },
   "devDependencies": {
     "wrangler": "^4.125.0"
