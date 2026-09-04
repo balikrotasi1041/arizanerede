@@ -47,7 +47,7 @@ function analyticsResponse(request,response,env) {
 }
 
 function hostRejected(){
-  return new Response(null,{status:421,headers:{"cache-control":"private, no-store","x-robots-tag":"noindex, nofollow, noarchive","x-content-type-options":"nosniff"}});
+  return new Response(null,{status:421,headers:{"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
 }
 
 export default {
