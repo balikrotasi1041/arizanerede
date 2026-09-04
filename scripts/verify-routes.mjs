@@ -24,7 +24,7 @@ for(const device of deviceTypes){
 for(const family of indexableFamilies){
   const {response,text}=await body(pathForFamily(family));
   expect(response.status===200,`Aile rotası başarısız: ${family.brand}/${family.slug}`);
-  expect(text.includes("arızaları ve modelleri"),`Aile sayfası arıza niyetine göre zenginleştirilmemiş: ${family.brand}/${family.slug}`);
+  expect(text.includes("Teknik destek karşılaştırması")&&text.includes("Araştırılan sorun alanları"),`Aile sayfası arıza niyeti ve teknik karşılaştırmayla zenginleştirilmemiş: ${family.brand}/${family.slug}`);
   noNoindex(response,text,`Aile ${family.brand}/${family.slug}`);
 }
 for(const model of indexableModels){
