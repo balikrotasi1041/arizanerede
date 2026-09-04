@@ -4,10 +4,19 @@ import app from "../src/index.js";
 import {SITE_ORIGIN} from "../src/catalog.js";
 
 const contract=JSON.parse(readFileSync("seo-url-contract.json","utf8"));
-const response=await app.fetch(new Request(`${SITE_ORIGIN}/sitemap.xml`),{});
-if(response.status!==200){console.error(`URL SÖZLEŞMESİ HATASI: sitemap ${response.status}`);process.exit(1)}
-const xml=await response.text();
-const paths=[...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match=>match[1].replace(SITE_ORIGIN,"")).sort();
+const rootResponse=await app.fetch(new Request(`${SITE_ORIGIN}/sitemap.xml`),{});
+if(rootResponse.status!==200){console.error(`URL SÖZLEŞMESİ HATASI: sitemap index ${rootResponse.status}`);process.exit(1)}
+const rootXml=await rootResponse.text();
+const childUrls=[...rootXml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match=>match[1]);
+if(!rootXml.includes("<sitemapindex")||!childUrls.length){console.error("URL SÖZLEŞMESİ HATASI: sitemap.xml sitemap index değil");process.exit(1)}
+const paths=[];
+for(const child of childUrls){
+  const response=await app.fetch(new Request(child),{});
+  if(response.status!==200){console.error(`URL SÖZLEŞMESİ HATASI: alt sitemap ${child} -> ${response.status}`);process.exit(1)}
+  const xml=await response.text();
+  paths.push(...[...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(match=>match[1].replace(SITE_ORIGIN,"")));
+}
+paths.sort();
 const payload=paths.join("\n");
 const sha256=createHash("sha256").update(payload).digest("hex");
 
