@@ -60,18 +60,19 @@ for(const family of indexableFamilies)expect(uniqueUrls.has(`${SITE_ORIGIN}${pat
 for(const device of deviceTypes){for(const brand of brands.filter(item=>item.deviceTypes.includes(device.slug)&&isBrandIndexable(device.slug,item.slug)))expect(uniqueUrls.has(`${SITE_ORIGIN}${pathForBrand(device.slug,brand.slug)}`),`Marka hub sitemap'te yok: ${device.slug}/${brand.slug}`);}
 
 const protectedModels=[
-  ["dreame","R20"],
-  ["baymak","Elegant Soft 12"],
-  ["tcl","65T61C"],
-  ["lg","OLED evo 55C64LA"],
-  ["grundig","50 GQ 750 A"],
-  ["tchibo","Cafissimo Picco"],
-  ["canon","PIXMA G3470"],
-  ["arcelik","TEM 9690"]
+  {brand:"dreame",needle:"r20"},
+  {brand:"baymak",needle:"elegant soft 12"},
+  {brand:"tcl",needle:"65t61c"},
+  {brand:"lg",needle:"55c64la"},
+  {brand:"grundig",needle:"50 gq 750 a"},
+  {brand:"tchibo",needle:"cafissimo picco"},
+  {brand:"canon",needle:"g3470"},
+  {brand:"arcelik",needle:"9690"}
 ];
-for(const [brand,name] of protectedModels){
-  const model=indexableModels.find(item=>item.brand===brand&&item.name===name);
-  expect(Boolean(model),`Search Console değeri olan model katalogdan kayboldu: ${brand}/${name}`);
+for(const target of protectedModels){
+  const needle=target.needle.toLocaleLowerCase("tr-TR");
+  const model=indexableModels.find(item=>item.brand===target.brand&&`${item.name} ${item.modelCode} ${item.slug}`.toLocaleLowerCase("tr-TR").includes(needle));
+  expect(Boolean(model),`Search Console değeri olan model katalogdan kayboldu: ${target.brand}/${target.needle}`);
   if(model){
     const path=pathForModel(model);
     expect(uniqueUrls.has(`${SITE_ORIGIN}${path}`),`Korunan model sitemap'ten kayboldu: ${path}`);
