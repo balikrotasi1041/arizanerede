@@ -10,23 +10,29 @@ const expect=(ok,message)=>{if(!ok)errors.push(message)};
 const get=async(path,env={})=>app.fetch(new Request(`${SITE_ORIGIN}${path}`),env);
 const body=async(path,env={})=>{const response=await get(path,env);return {response,text:await response.text()}};
 const PLACEHOLDER=/(hazırlan(?:ıyor|acak)|güncellenecek|yakında|\btodo\b|\btbd\b|placeholder)/i;
+const noNoindex=(response,text,label)=>{
+  expect(!String(response.headers.get("x-robots-tag")||"").toLowerCase().includes("noindex"),`${label} X-Robots noindex içermemeli`);
+  expect(!text.includes('name="robots" content="noindex'),`${label} meta robots noindex içermemeli`);
+};
 
 for(const device of deviceTypes){
   const {response,text}=await body(pathForDeviceType(device));
   expect(response.status===200,`Kategori rotası başarısız: ${device.slug}`);
   expect(text.includes(`<link rel="canonical" href="${SITE_ORIGIN}${pathForDeviceType(device)}">`),`Kategori canonical eksik: ${device.slug}`);
+  noNoindex(response,text,`Kategori ${device.slug}`);
 }
 for(const family of indexableFamilies){
   const {response,text}=await body(pathForFamily(family));
   expect(response.status===200,`Aile rotası başarısız: ${family.brand}/${family.slug}`);
-  expect(!text.includes('name="robots" content="noindex'),`Yayınlanan aile noindex olmamalı: ${family.brand}/${family.slug}`);
+  expect(text.includes("arızaları ve modelleri"),`Aile sayfası arıza niyetine göre zenginleştirilmemiş: ${family.brand}/${family.slug}`);
+  noNoindex(response,text,`Aile ${family.brand}/${family.slug}`);
 }
 for(const model of indexableModels){
   const path=pathForModel(model);
   const {response,text}=await body(path);
   expect(response.status===200,`Model rotası başarısız: ${path}`);
   expect(text.includes(`<link rel="canonical" href="${SITE_ORIGIN}${path}">`),`Model canonical eksik: ${path}`);
-  expect(!text.includes('name="robots" content="noindex'),`Yayınlanan model noindex olmamalı: ${path}`);
+  noNoindex(response,text,`Model ${path}`);
   expect(text.includes("araştırılmış sorun alanı"),`Model sorun kapsamı sayacı görünmüyor: ${path}`);
   expect(text.includes("Bu model için araştırılmış yaygın arıza ve belirti alanları"),`Model geniş sorun kapsamı görünmüyor: ${path}`);
   expect((model.symptomClusters||[]).length>=ISSUE_QUALITY_MIN,`Model sorun kapsamı kalite eşiğinin altında: ${path}`);
@@ -38,6 +44,7 @@ for(const issue of issues){
   const {response,text}=await body(pathForIssue(issue));
   expect(response.status===200,`Arıza rotası başarısız: ${pathForIssue(issue)}`);
   expect(text.includes(issue.title),`Arıza başlığı görünmüyor: ${pathForIssue(issue)}`);
+  noNoindex(response,text,`Arıza ${pathForIssue(issue)}`);
 }
 
 const scooter=indexableModels.find(x=>x.deviceType==="elektrikli-scooter");
@@ -50,39 +57,58 @@ if(scooter){
 
 const search=await body("/ara/?q=X20%20Pro");
 expect(search.response.status===200,"İç arama rotası başarısız");
-expect(search.response.headers.get("x-robots-tag")?.includes("noindex"),"İç arama X-Robots-Tag ile noindex olmalı");
+noNoindex(search.response,search.text,"İç arama");
 expect(search.text.includes("Robot Vacuum X20 Pro"),"Yeni katalog iç aramada bulunamıyor");
 
-const sitemapResponse=await get("/sitemap.xml");
-const sitemap=await sitemapResponse.text();
-expect(sitemapResponse.status===200,"Sitemap başarısız");
+const sitemapIndexResponse=await get("/sitemap.xml");
+const sitemapIndexText=await sitemapIndexResponse.text();
+expect(sitemapIndexResponse.status===200,"Sitemap index başarısız");
+expect(sitemapIndexText.includes("<sitemapindex"),"/sitemap.xml sitemap index olmalı");
+const childUrls=[...sitemapIndexText.matchAll(/<loc>(.*?)<\/loc>/g)].map(match=>match[1]);
+expect(childUrls.length===4,"Sitemap index 4 içerik grubu içermeli");
+let sitemap="";
+for(const absolute of childUrls){
+  const childPath=absolute.replace(SITE_ORIGIN,"");
+  const response=await get(childPath);
+  expect(response.status===200,`Alt sitemap başarısız: ${childPath}`);
+  sitemap+=await response.text();
+}
 expect(!sitemap.includes("/admin/")&&!sitemap.includes("/ara/"),"Admin veya arama sitemap'e girmemeli");
 for(const model of indexableModels)expect(sitemap.includes(`${SITE_ORIGIN}${pathForModel(model)}`),`Model sitemap'te yok: ${pathForModel(model)}`);
 
+const sample=indexableModels.find(model=>model.deviceType==="robot-supurge"&&model.brand==="roborock"&&model.slug==="s8")||indexableModels[0];
+if(sample){
+  const canonical=pathForModel(sample);
+  const withoutSlash=canonical.replace(/\/$/,"");
+  const slashResponse=await get(withoutSlash);
+  expect(slashResponse.status===308&&slashResponse.headers.get("location")===`${SITE_ORIGIN}${canonical}`,`Canonical trailing slash redirect başarısız: ${withoutSlash}`);
+  const legacy=`/${sample.deviceType}/${sample.brand}/${sample.slug}/`;
+  if(legacy!==canonical){
+    const legacyResponse=await get(legacy);
+    expect(legacyResponse.status===308&&legacyResponse.headers.get("location")===`${SITE_ORIGIN}${canonical}`,`Eski family-less model yolu canonical'a yönlenmiyor: ${legacy}`);
+  }
+}
+
 const robots=await body("/robots.txt");
-expect(robots.text.includes("Disallow: /admin/")&&robots.text.includes(`${SITE_ORIGIN}/sitemap.xml`),"robots.txt admin/sitemap kuralları eksik");
+expect(robots.text.includes("Disallow: /admin/")&&robots.text.includes("Disallow: /ara")&&robots.text.includes(`${SITE_ORIGIN}/sitemap.xml`),"robots.txt admin/arama/sitemap kuralları eksik");
 const health=await get("/health");
 const healthData=await health.json();
 expect(healthData.indexableModels===indexableModels.length,"Health model sayısı gerçek veriden gelmiyor");
 expect(healthData.symptomClusters===indexableModels.reduce((n,m)=>n+m.symptomClusters.length,0),"Health belirti sayısı gerçek veriden gelmiyor");
 
 const metrics=adminMetrics();
-const supportOnly=metrics.gaps.supportOnlyPairs[0];
-if(supportOnly){
-  const result=await body(pathForBrand(supportOnly.deviceType,supportOnly.brandSlug));
-  expect(result.response.status===200,"Support-only marka destek rotası çalışmıyor");
-  expect(result.response.headers.get("x-robots-tag")?.includes("noindex"),"Support-only marka rotası noindex değil");
-}
+expect(metrics.gaps.supportOnlyPairs.length===0,"Support-only marka-kategori borcu kalmamalı");
 const locked=await get("/admin/dashboard/",{ADMIN_ACCESS_READY:"false"});
 expect(locked.status===403,"Admin anahtarı false iken fail-closed değil");
 expect(locked.headers.get("cache-control")==="private, no-store","Admin kilit yanıtı cache dışı değil");
-expect(locked.headers.get("x-robots-tag")?.includes("noindex"),"Admin kilit yanıtı noindex değil");
+expect(!String(locked.headers.get("x-robots-tag")||"").toLowerCase().includes("noindex"),"Admin kilit yanıtı noindex kullanmamalı");
 const noJwt=await get("/admin/dashboard/",{ADMIN_ACCESS_READY:"true"});
 expect(noJwt.status===403,"Access JWT olmadan admin açılmamalı");
 const adminRequest=new Request(`${SITE_ORIGIN}/admin/dashboard/`,{headers:{"Cf-Access-Jwt-Assertion":"test-only","Cf-Access-Authenticated-User-Email":"test@example.invalid"}});
 const dashboard=await app.fetch(adminRequest,{ADMIN_ACCESS_READY:"true"});
 const dashboardText=await dashboard.text();
 expect(dashboard.status===200&&dashboardText.includes("Support-only kalan marka"),"Yetkili admin dashboard gerçek kapsamı göstermiyor");
+expect(!dashboardText.includes('name="robots" content="noindex'),"Admin HTML noindex meta kullanmamalı");
 
 if(errors.length){for(const error of errors)console.error(`ROTA HATASI: ${error}`);process.exit(1)}
-console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası; geniş sorun kapsamı, sitemap, arama, health ve admin fail-closed çalışıyor.`);
+console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası; sitemap index, canonical redirect, eski URL kurtarma, arama, health ve admin fail-closed çalışıyor.`);
