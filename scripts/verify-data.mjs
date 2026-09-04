@@ -64,7 +64,15 @@ for(const i of issues){
 }
 if(PROVINCES.length!==81) errors.push(`İl sayısı 81 değil: ${PROVINCES.length}`);
 if(marketInventory.length!==deviceTypes.length) errors.push(`Pazar keşif kaydı kategori sayısıyla eşleşmiyor: ${marketInventory.length}/${deviceTypes.length}`);
-for(const market of marketInventory)if(!/https:\/\/www\.akakce\.com\//.test(market.sourceUrl)||market.observedAt!=="2026-08-26")errors.push(`Pazar keşif kaydı geçersiz: ${market.deviceType}`);
+const today=new Date();
+today.setUTCHours(23,59,59,999);
+for(const market of marketInventory){
+  const isoDate=/^\d{4}-\d{2}-\d{2}$/.test(market.observedAt||"");
+  const observed=isoDate?new Date(`${market.observedAt}T00:00:00Z`):new Date(NaN);
+  if(!/https:\/\/www\.akakce\.com\//.test(market.sourceUrl)||!isoDate||Number.isNaN(observed.getTime())||observed>today){
+    errors.push(`Pazar keşif kaydı geçersiz: ${market.deviceType}`);
+  }
+}
 if(indexableModels.length!==models.length) errors.push(`Yayın koşulunu karşılamayan model var: ${indexableModels.length}/${models.length}`);
 if(indexableFamilies.length!==families.length) errors.push(`Modeli olmayan aile var: ${indexableFamilies.length}/${families.length}`);
 if(errors.length){console.error(errors.join("\n"));process.exit(1);}
