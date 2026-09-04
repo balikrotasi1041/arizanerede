@@ -24,8 +24,20 @@ function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.s
 
 export const deviceTypes=uniqueBy([...base.deviceTypes,...extraDeviceTypes,...petGroomingDeviceTypes],x=>x.slug);
 
+const PET_SERVICE_URLS={
+  "kiwi-pets":"https://kiwi.com.tr/tr/servisler-43-pg",
+  powertec:"https://powertec.com.tr/teknik-servis",
+  bezt:"https://bezt.com.tr/evcil-hayvan-urunleri",
+  wahl:"https://www.wahlpro.com/animal",
+  andis:"https://www.andis.com/CustomerCare/",
+  heiniger:"https://heiniger-pet-grooming.com/en/kontakt",
+  neakasa:"https://neakasa.com/pages/support-center",
+  aesculap:"https://www.aesculap-schermaschinen.de/en/services"
+};
+const normalizedPetBrands=petGroomingBrands.map(item=>({...item,serviceUrl:PET_SERVICE_URLS[item.slug]||item.serviceUrl,serviceMode:item.serviceMode||"official-contact"}));
+
 const mergedBrands=new Map(base.brands.map(b=>[b.slug,{...b,catalogStatus:b.catalogStatus||"partial-verified",trustLevel:b.trustLevel||"brand-official"}]));
-for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...petGroomingBrands]){
+for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalizedPetBrands]){
   const current=mergedBrands.get(extra.slug);
   if(!current){mergedBrands.set(extra.slug,extra);continue;}
   mergedBrands.set(extra.slug,{
@@ -118,13 +130,14 @@ const indexableBrandKeys=new Set(indexableModels.map(m=>`${m.deviceType}/${m.bra
 export function isBrandIndexable(deviceType,brand){return indexableBrandKeys.has(`${deviceType}/${brand}`)}
 
 export function supportLinksForBrand(brand){
+  const serviceLabel=["official-directory","locator"].includes(brand.serviceMode)?"Yetkili servis / onarım":"Resmî destek / servis iletişimi";
   return [
     ["Resmî marka sitesi",brand.officialTurkey],
     ["Resmî ürün kataloğu",brand.officialCatalogUrl],
     ["Destek merkezi",brand.supportUrl],
     ["Kılavuz / belgeler",brand.manualUrl],
     ["Sürücü / yazılım / firmware",brand.softwareUrl],
-    ["Yetkili servis / onarım",brand.serviceUrl],
+    [serviceLabel,brand.serviceUrl],
     ["Garanti",brand.warrantyUrl]
   ].filter(([,url])=>typeof url==="string"&&url.startsWith("https://"));
 }
