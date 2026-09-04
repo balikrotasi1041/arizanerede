@@ -20,7 +20,6 @@ expect(source.includes("clientAsn") && source.includes("request?.cf?.asn"), "Clo
 for (const signature of [
   "CF-Connecting-IP",
   "decodeURIComponent",
-  "x-robots-tag",
   "wp|wordpress",
   "wp-login\\.php",
   "xmlrpc\\.php",
@@ -39,8 +38,8 @@ for (const signature of [
 expect(source.includes('[^/]+\\.php'), "PHP probe istekleri genel olarak erken reddedilmeli.");
 expect(source.includes('request.method==="TRACE"'), "TRACE istekleri açıkça reddedilmeli.");
 expect(source.includes('!["GET","HEAD"].includes(request.method)'), "GET/HEAD dışındaki yöntemler reddedilmeli.");
-expect(source.includes("private, no-store"), "Güvenlik cevapları cache dışı kalmalı.");
-expect(source.includes("noindex, nofollow, noarchive, nosnippet"), "Probe ve blok yanıtları arama indeksinden dışlanmalı.");
+expect(source.includes("private, no-store"), "Güvenlik ve yönetim cevapları cache dışı kalmalı.");
+expect(!source.includes("x-robots-tag"), "Worker noindex X-Robots-Tag üretmemeli.");
 expect(wrangler.includes('"workers_dev": false'), "Production Worker workers.dev alt alanında yayınlanmamalı.");
 expect(wrangler.includes('"ADMIN_ACCESS_READY": "false"'), "Access JWT doğrulaması tamamlanana kadar admin fail-closed kalmalı.");
 
@@ -49,4 +48,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log("Arıza Nerede güvenlik duruşu doğrulandı: IP/ASN engelleri, scanner probe korumaları, workers.dev kapatması, yöntem kısıtları ve admin fail-closed mevcut.");
+console.log("Arıza Nerede güvenlik duruşu doğrulandı: IP/ASN engelleri, scanner probe korumaları, workers.dev kapatması, yöntem kısıtları ve admin fail-closed mevcut; noindex güvenlik başlığı kullanılmıyor.");
