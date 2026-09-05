@@ -12,6 +12,9 @@ import { gapClosureFamilies,gapClosureModels } from "./catalog-data/support-gap-
 import {
   petGroomingDeviceTypes,petGroomingBrands,petGroomingFamilies,petGroomingModels,petGroomingScreening
 } from "./catalog-data/pet-grooming.js";
+import {
+  electricBicycleDeviceTypes,electricBicycleBrands,electricBicycleFamilies,electricBicycleModels,electricBicycleScreening
+} from "./catalog-data/electric-bicycles.js";
 import { VERIFIED_AT } from "./catalog-data/helpers.js";
 import { buildExpandedSymptomClusters,mergeSymptomClusters,ISSUE_QUALITY_MIN } from "./catalog-data/issue-taxonomy.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
@@ -22,7 +25,7 @@ import {
 
 function uniqueBy(items,keyFn){const map=new Map();for(const item of items)map.set(keyFn(item),item);return [...map.values()];}
 
-export const deviceTypes=uniqueBy([...base.deviceTypes,...extraDeviceTypes,...petGroomingDeviceTypes],x=>x.slug);
+export const deviceTypes=uniqueBy([...base.deviceTypes,...extraDeviceTypes,...petGroomingDeviceTypes,...electricBicycleDeviceTypes],x=>x.slug);
 
 const PET_SERVICE_URLS={
   "kiwi-pets":"https://kiwi.com.tr/tr/servisler-43-pg",
@@ -37,7 +40,7 @@ const PET_SERVICE_URLS={
 const normalizedPetBrands=petGroomingBrands.map(item=>({...item,serviceUrl:PET_SERVICE_URLS[item.slug]||item.serviceUrl,serviceMode:item.serviceMode||"official-contact"}));
 
 const mergedBrands=new Map(base.brands.map(b=>[b.slug,{...b,catalogStatus:b.catalogStatus||"partial-verified",trustLevel:b.trustLevel||"brand-official"}]));
-for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalizedPetBrands]){
+for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalizedPetBrands,...electricBicycleBrands]){
   const current=mergedBrands.get(extra.slug);
   if(!current){mergedBrands.set(extra.slug,extra);continue;}
   mergedBrands.set(extra.slug,{
@@ -50,9 +53,9 @@ for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalize
 }
 export const brands=[...mergedBrands.values()];
 
-const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies,...gapClosureFamilies,...petGroomingFamilies];
+const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies,...gapClosureFamilies,...petGroomingFamilies,...electricBicycleFamilies];
 export const families=uniqueBy(expandedFamilies,x=>`${x.deviceType}/${x.brand}/${x.slug}`);
-const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels,...gapClosureModels,...petGroomingModels];
+const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels,...gapClosureModels,...petGroomingModels,...electricBicycleModels];
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
@@ -94,7 +97,7 @@ export const normalize=base.normalize;
 export {
   legalResources,marketInventory,marketInventoryByDevice,ISSUE_QUALITY_MIN,SEO_ROLLOUT_STAGE,
   editorialGuides,serviceGuides,indexableEditorialGuides,indexableServiceGuides,
-  editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand,petGroomingScreening
+  editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand,petGroomingScreening,electricBicycleScreening
 };
 
 export const deviceTypeBySlug=new Map(deviceTypes.map(x=>[x.slug,x]));
