@@ -39,6 +39,14 @@ jobs:
         run: node scripts/verify-routes.mjs
       - name: Validate SEO
         run: node scripts/verify-seo.mjs
+      - name: Capture URL contract
+        run: node scripts/capture-url-contract.mjs
+      - name: Upload URL contract diagnostic
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: url-contract-actual
+          path: url-contract-actual.json
+          retention-days: 1
       - name: Validate URL contract
         run: node scripts/verify-url-contract.mjs
       - name: Validate dry deploy
