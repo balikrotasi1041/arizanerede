@@ -1,8 +1,5 @@
 import app from "../src/index.js";
-import {
-  SITE_ORIGIN,indexableModels,indexableFamilies,brands,marketInventoryByDevice,
-  electricBicycleScreening,pathForDeviceType,pathForBrand,pathForFamily,pathForModel,ISSUE_QUALITY_MIN
-} from "../src/catalog.js";
+import {SITE_ORIGIN,indexableModels,indexableFamilies,brands,marketInventoryByDevice,electricBicycleScreening,pathForDeviceType,pathForBrand,pathForFamily,pathForModel,ISSUE_QUALITY_MIN} from "../src/catalog.js";
 
 const DEVICE="elektrikli-bisiklet";
 const errors=[];
@@ -16,10 +13,11 @@ const https=value=>typeof value==="string"&&value.startsWith("https://");
 expect(market?.sourceUrl==="https://www.akakce.com/elektrikli-bisiklet.html","Akakçe elektrikli bisiklet kaynağı kayıtlı değil");
 expect(market?.observedListings===587,"İlk pazar taraması 587 kayıt olmalı");
 expect(market?.observedBrands===42,"İlk pazar taraması 42 marka olmalı");
-expect(electricBicycleScreening?.acceptedModels===10,"İlk günlük elektrikli bisiklet paketi 10 model olmalı");
-expect(models.length===10,`Public elektrikli bisiklet modeli 10 olmalı; mevcut=${models.length}`);
-expect(ebikeBrands.length===2,`İlk pakette 2 marka olmalı; mevcut=${ebikeBrands.length}`);
-expect(families.length===3,`İlk pakette 3 aile/seri olmalı; mevcut=${families.length}`);
+expect(electricBicycleScreening?.acceptedModels===20,"Kümülatif elektrikli bisiklet paketi 20 model olmalı");
+expect(electricBicycleScreening?.lastBatchAccepted===10,"Son günlük paket 10 model olmalı");
+expect(models.length===20,`Public elektrikli bisiklet modeli 20 olmalı; mevcut=${models.length}`);
+expect(ebikeBrands.length===4,`Elektrikli bisiklet markası 4 olmalı; mevcut=${ebikeBrands.length}`);
+expect(families.length===5,`Elektrikli bisiklet seri/aile sayısı 5 olmalı; mevcut=${families.length}`);
 expect(electricBicycleScreening.held?.some(item=>item.name==="Volta VSM"),"Akakçe/üretici sınıflandırma çatışması VSM için kayıtlı değil");
 expect(!models.some(model=>/\bVSM\b/i.test(model.name)),"Volta VSM üretici e-bike olarak sınıflandırmadığı halde public olmuş");
 
@@ -48,4 +46,4 @@ for(const path of paths){
 }
 
 if(errors.length){for(const error of errors)console.error(`E-BIKE HATASI: ${error}`);process.exit(1)}
-console.log(`Elektrikli bisiklet kalite kapısı geçti: Akakçe ${market.observedListings} kayıt/${market.observedBrands} marka pazar taraması; bugün ${ebikeBrands.length} marka, ${families.length} seri/aile ve ${models.length} tam model public.`);
+console.log(`Elektrikli bisiklet kalite kapısı geçti: Akakçe ${market.observedListings} kayıt/${market.observedBrands} marka pazar taraması; kümülatif ${ebikeBrands.length} marka, ${families.length} seri/aile ve ${models.length} tam model public.`);
