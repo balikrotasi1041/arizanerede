@@ -13,13 +13,20 @@ const https=value=>typeof value==="string"&&value.startsWith("https://");
 expect(market?.sourceUrl==="https://www.akakce.com/elektrikli-bisiklet.html","Akakçe elektrikli bisiklet kaynağı kayıtlı değil");
 expect(market?.observedListings===587,"İlk pazar taraması 587 kayıt olmalı");
 expect(market?.observedBrands===42,"İlk pazar taraması 42 marka olmalı");
-expect(electricBicycleScreening?.acceptedModels===20,"Kümülatif elektrikli bisiklet paketi 20 model olmalı");
+expect(electricBicycleScreening?.acceptedModels===30,"Kümülatif elektrikli bisiklet paketi 30 model olmalı");
 expect(electricBicycleScreening?.lastBatchAccepted===10,"Son günlük paket 10 model olmalı");
-expect(models.length===20,`Public elektrikli bisiklet modeli 20 olmalı; mevcut=${models.length}`);
-expect(ebikeBrands.length===4,`Elektrikli bisiklet markası 4 olmalı; mevcut=${ebikeBrands.length}`);
-expect(families.length===5,`Elektrikli bisiklet seri/aile sayısı 5 olmalı; mevcut=${families.length}`);
+expect(models.length===30,`Public elektrikli bisiklet modeli 30 olmalı; mevcut=${models.length}`);
+expect(ebikeBrands.length===5,`Elektrikli bisiklet markası 5 olmalı; mevcut=${ebikeBrands.length}`);
+expect(families.length===6,`Elektrikli bisiklet seri/aile sayısı 6 olmalı; mevcut=${families.length}`);
 expect(electricBicycleScreening.held?.some(item=>item.name==="Volta VSM"),"Akakçe/üretici sınıflandırma çatışması VSM için kayıtlı değil");
+expect(electricBicycleScreening.held?.some(item=>item.name==="RKS RD8 Premium 1500W"),"RKS RD8 Premium 1500W kalite bekletme kaydı eksik");
 expect(!models.some(model=>/\bVSM\b/i.test(model.name)),"Volta VSM üretici e-bike olarak sınıflandırmadığı halde public olmuş");
+expect(models.some(model=>model.name==="Volta VB1 Lite"),"Volta VB1 Lite öncelikli paket içinde yok");
+for(const name of ["RKS BN5 Pro","RKS RS3 Pro X","RKS RS3 Pro Max","RKS RS3 Pro","RKS RSI-X Pro","RKS RV10","RKS MX25","RKS MX55 Pro","RKS Lesso Pro"]){
+  expect(models.some(model=>model.name===name),`Öncelikli RKS modeli public değil: ${name}`);
+}
+const rks=brands.find(brand=>brand.slug==="rks");
+expect(https(rks?.serviceUrl)&&rks?.serviceMode==="official-directory","RKS resmî yetkili servis dizini kayıtlı değil");
 
 for(const model of models){
   expect(https(model.productUrl)&&https(model.supportUrl)&&https(model.manualUrl),`Resmî ürün/destek/kılavuz kaynağı eksik: ${model.name}`);
