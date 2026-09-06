@@ -23,5 +23,23 @@ jobs:
         run: corepack enable && corepack prepare pnpm@11.19.0 --activate
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Validate data, security and dry deploy
-        run: pnpm run check
+      - name: Validate data
+        run: node scripts/verify-data.mjs
+      - name: Validate security
+        run: node scripts/verify-security.mjs
+      - name: Validate discovery
+        run: node scripts/verify-discovery.mjs
+      - name: Validate admin metrics
+        run: node scripts/verify-admin.mjs
+      - name: Validate pet grooming
+        run: node scripts/verify-pet-grooming.mjs
+      - name: Validate electric bicycles
+        run: node scripts/verify-electric-bicycles.mjs
+      - name: Validate routes
+        run: node scripts/verify-routes.mjs
+      - name: Validate SEO
+        run: node scripts/verify-seo.mjs
+      - name: Validate URL contract
+        run: node scripts/verify-url-contract.mjs
+      - name: Validate dry deploy
+        run: pnpm exec wrangler deploy --dry-run
