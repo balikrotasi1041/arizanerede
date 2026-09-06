@@ -13,8 +13,11 @@ import {
   petGroomingDeviceTypes,petGroomingBrands,petGroomingFamilies,petGroomingModels,petGroomingScreening
 } from "./catalog-data/pet-grooming.js";
 import {
-  electricBicycleDeviceTypes,electricBicycleBrands,electricBicycleFamilies,electricBicycleModels,electricBicycleScreening
+  electricBicycleDeviceTypes,electricBicycleBrands,electricBicycleFamilies,electricBicycleModels,electricBicycleScreening as baseElectricBicycleScreening
 } from "./catalog-data/electric-bicycles.js";
+import {
+  priorityEbikeBrands,priorityEbikeFamilies,priorityEbikeModels,priorityEbikeScreening
+} from "./catalog-data/electric-bicycles-rks-volta-2026-09.js";
 import { VERIFIED_AT } from "./catalog-data/helpers.js";
 import { buildExpandedSymptomClusters,mergeSymptomClusters,ISSUE_QUALITY_MIN } from "./catalog-data/issue-taxonomy.js";
 import { marketInventory,marketInventoryByDevice } from "./catalog-data/market.js";
@@ -40,7 +43,7 @@ const PET_SERVICE_URLS={
 const normalizedPetBrands=petGroomingBrands.map(item=>({...item,serviceUrl:PET_SERVICE_URLS[item.slug]||item.serviceUrl,serviceMode:item.serviceMode||"official-contact"}));
 
 const mergedBrands=new Map(base.brands.map(b=>[b.slug,{...b,catalogStatus:b.catalogStatus||"partial-verified",trustLevel:b.trustLevel||"brand-official"}]));
-for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalizedPetBrands,...electricBicycleBrands]){
+for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalizedPetBrands,...electricBicycleBrands,...priorityEbikeBrands]){
   const current=mergedBrands.get(extra.slug);
   if(!current){mergedBrands.set(extra.slug,extra);continue;}
   mergedBrands.set(extra.slug,{
@@ -53,9 +56,9 @@ for(const extra of [...extraBrands,...marketBrands,...refreshBrands,...normalize
 }
 export const brands=[...mergedBrands.values()];
 
-const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies,...gapClosureFamilies,...petGroomingFamilies,...electricBicycleFamilies];
+const expandedFamilies=[...base.families,...scooterFamilies,...homeFamilies,...computingFamilies,...displayPrintFamilies,...climateMobilityFamilies,...refreshFamilies,...seoAdditionFamilies,...gapClosureFamilies,...petGroomingFamilies,...electricBicycleFamilies,...priorityEbikeFamilies];
 export const families=uniqueBy(expandedFamilies,x=>`${x.deviceType}/${x.brand}/${x.slug}`);
-const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels,...gapClosureModels,...petGroomingModels,...electricBicycleModels];
+const expandedModels=[...base.models,...scooterModels,...homeModels,...computingModels,...displayPrintModels,...climateMobilityModels,...refreshModels,...seoAdditionModels,...gapClosureModels,...petGroomingModels,...electricBicycleModels,...priorityEbikeModels];
 export const models=uniqueBy(expandedModels.map(model=>{
   const sourceUrl=model.manualUrl||model.supportUrl||model.productUrl;
   const market=marketInventoryByDevice.get(model.deviceType);
@@ -94,10 +97,19 @@ export const SERBIS_URL=base.SERBIS_URL;
 export const PROVINCES=base.PROVINCES;
 export const escalationRoutes=base.escalationRoutes;
 export const normalize=base.normalize;
+export const electricBicycleScreening={
+  ...baseElectricBicycleScreening,
+  acceptedModels:(baseElectricBicycleScreening?.acceptedModels||0)+(priorityEbikeScreening?.acceptedThisBatch||0),
+  lastBatchAccepted:priorityEbikeScreening?.acceptedThisBatch||baseElectricBicycleScreening?.lastBatchAccepted||0,
+  lastBatchDate:priorityEbikeScreening?.observedAt||baseElectricBicycleScreening?.lastBatchDate,
+  priorityBrands:priorityEbikeScreening?.brandsPrioritized||[],
+  communityUse:priorityEbikeScreening?.communityUse,
+  held:[...(baseElectricBicycleScreening?.held||[]),...(priorityEbikeScreening?.held||[])]
+};
 export {
   legalResources,marketInventory,marketInventoryByDevice,ISSUE_QUALITY_MIN,SEO_ROLLOUT_STAGE,
   editorialGuides,serviceGuides,indexableEditorialGuides,indexableServiceGuides,
-  editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand,petGroomingScreening,electricBicycleScreening
+  editorialGuideBySlug,serviceGuideBySlug,serviceGuideByBrand,petGroomingScreening
 };
 
 export const deviceTypeBySlug=new Map(deviceTypes.map(x=>[x.slug,x]));
