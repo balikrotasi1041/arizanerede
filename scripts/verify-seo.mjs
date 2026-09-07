@@ -8,6 +8,8 @@ import {pathForEditorialGuide,pathForServiceGuide} from "../src/ui.js";
 const errors=[];
 const expect=(ok,message)=>{if(!ok)errors.push(message)};
 const get=path=>app.fetch(new Request(`${SITE_ORIGIN}${path}`),{});
+const SEO_MAX_ISSUE_TO_MODEL_RATIO=0.35;
+const SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO=1.85;
 const noNoindex=async(path,label)=>{
   const response=await get(path);const text=await response.text();
   expect(response.status===200,`${label} 200 değil: ${path} -> ${response.status}`);
@@ -33,7 +35,12 @@ for(const absolute of childSitemaps){
 const uniqueUrls=new Set(sitemapUrls);
 expect(uniqueUrls.size===sitemapUrls.length,"Alt sitemapler yinelenen URL içeriyor.");
 expect(sitemapUrls.every(url=>url.startsWith(`${SITE_ORIGIN}/`)),"Sitemap yalnız canonical host URL'leri içermeli.");
-expect(!sitemapUrls.some(url=>url.includes("/ara")||url.includes("/admin/")),"Arama ve admin sitemap dışında kalmalı.");
+expect(!sitemapUrls.some(url=>url.includes("/ara")||url.includes("/admin/")||url.endsWith("/health")),"Arama, admin ve health sitemap dışında kalmalı.");
+
+const issueToModelRatio=indexableModels.length?indexableIssues.length/indexableModels.length:0;
+const indexTargetToModelRatio=indexableModels.length?sitemapUrls.length/indexableModels.length:0;
+expect(issueToModelRatio<=SEO_MAX_ISSUE_TO_MODEL_RATIO,`SEO güvenlik valfi: bağımsız arıza/model oranı ${(issueToModelRatio*100).toFixed(1)}% ile ${(SEO_MAX_ISSUE_TO_MODEL_RATIO*100).toFixed(0)}% sınırını aşıyor. Yeni sorunları önce model sayfasında tut.`);
+expect(indexTargetToModelRatio<=SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO,`SEO güvenlik valfi: indeks hedefi/model oranı ${indexTargetToModelRatio.toFixed(2)} ile ${SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO.toFixed(2)} sınırını aşıyor. URL üretimini yavaşlat.`);
 
 for(const absolute of sitemapUrls){
   const path=absolute.slice(SITE_ORIGIN.length)||"/";
@@ -61,12 +68,16 @@ for(const device of deviceTypes){for(const brand of brands.filter(item=>item.dev
 
 const protectedModels=[
   {brand:"dreame",needle:"r20"},
+  {brand:"dreame",needle:"z30"},
   {brand:"baymak",needle:"elegant soft 12"},
   {brand:"tcl",needle:"65t61c"},
   {brand:"lg",needle:"55c64la"},
   {brand:"grundig",needle:"50 gq 750 a"},
   {brand:"tchibo",needle:"cafissimo picco"},
+  {brand:"canon",needle:"g3410"},
   {brand:"canon",needle:"g3470"},
+  {brand:"onvo",needle:"32vq80f2ha"},
+  {brand:"philips",needle:"xc6452"},
   {brand:"arcelik",needle:"9690"}
 ];
 for(const target of protectedModels){
@@ -85,4 +96,4 @@ const searchText=await noNoindex("/ara/?q=55C64LA","İç arama");
 expect(searchText.includes("55C64LA"),"İç arama model kodu sorgusuna cevap vermiyor");
 
 if(errors.length){for(const error of errors)console.error(`SEO HATASI: ${error}`);process.exit(1)}
-console.log(`SEO kalite kapısı geçti: ${sitemapUrls.length} indeks hedefi, ${indexableIssues.length}/${issues.length} teknik arıza public ve indeks hedefinde, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası; noindex kullanılmıyor.`);
+console.log(`SEO kalite kapısı geçti: ${sitemapUrls.length} indeks hedefi, ${indexableIssues.length}/${issues.length} teknik arıza public ve indeks hedefinde, issue/model oranı ${(issueToModelRatio*100).toFixed(1)}%, indeks/model oranı ${indexTargetToModelRatio.toFixed(2)}, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası; noindex kullanılmıyor.`);
