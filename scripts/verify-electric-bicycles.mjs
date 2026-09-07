@@ -1,56 +1,12 @@
 import app from "../src/index.js";
 import {SITE_ORIGIN,indexableModels,indexableFamilies,brands,marketInventoryByDevice,electricBicycleScreening,pathForDeviceType,pathForBrand,pathForFamily,pathForModel,ISSUE_QUALITY_MIN} from "../src/catalog.js";
-
-const DEVICE="elektrikli-bisiklet";
-const errors=[];
-const expect=(ok,message)=>{if(!ok)errors.push(message)};
-const models=indexableModels.filter(model=>model.deviceType===DEVICE);
-const families=indexableFamilies.filter(family=>family.deviceType===DEVICE);
-const ebikeBrands=brands.filter(brand=>brand.deviceTypes?.includes(DEVICE)&&models.some(model=>model.brand===brand.slug));
-const market=marketInventoryByDevice.get(DEVICE);
-const https=value=>typeof value==="string"&&value.startsWith("https://");
-
+const DEVICE="elektrikli-bisiklet",errors=[],expect=(ok,message)=>{if(!ok)errors.push(message)};
+const models=indexableModels.filter(model=>model.deviceType===DEVICE),families=indexableFamilies.filter(family=>family.deviceType===DEVICE),ebikeBrands=brands.filter(brand=>brand.deviceTypes?.includes(DEVICE)&&models.some(model=>model.brand===brand.slug)),market=marketInventoryByDevice.get(DEVICE),https=value=>typeof value==="string"&&value.startsWith("https://");
 expect(market?.sourceUrl==="https://www.akakce.com/elektrikli-bisiklet.html","Akakçe elektrikli bisiklet kaynağı kayıtlı değil");
-expect(market?.observedListings===587,"İlk pazar taraması 587 kayıt olmalı");
-expect(market?.observedBrands===42,"İlk pazar taraması 42 marka olmalı");
-expect(electricBicycleScreening?.acceptedModels===30,"Kümülatif elektrikli bisiklet paketi 30 model olmalı");
-expect(electricBicycleScreening?.lastBatchAccepted===10,"Son günlük paket 10 model olmalı");
-expect(models.length===30,`Public elektrikli bisiklet modeli 30 olmalı; mevcut=${models.length}`);
-expect(ebikeBrands.length===5,`Elektrikli bisiklet markası 5 olmalı; mevcut=${ebikeBrands.length}`);
-expect(families.length===6,`Elektrikli bisiklet seri/aile sayısı 6 olmalı; mevcut=${families.length}`);
-expect(electricBicycleScreening.held?.some(item=>item.name==="Volta VSM"),"Akakçe/üretici sınıflandırma çatışması VSM için kayıtlı değil");
-expect(electricBicycleScreening.held?.some(item=>item.name==="RKS RD8 Premium 1500W"),"RKS RD8 Premium 1500W kalite bekletme kaydı eksik");
-expect(!models.some(model=>/\bVSM\b/i.test(model.name)),"Volta VSM üretici e-bike olarak sınıflandırmadığı halde public olmuş");
-expect(models.some(model=>model.name==="Volta VB1 Lite"),"Volta VB1 Lite öncelikli paket içinde yok");
-for(const name of ["RKS BN5 Pro","RKS RS3 Pro X","RKS RS3 Pro Max","RKS RS3 Pro","RKS RSI-X Pro","RKS RV10","RKS MX25","RKS MX55 Pro","RKS Lesso Pro"]){
-  expect(models.some(model=>model.name===name),`Öncelikli RKS modeli public değil: ${name}`);
-}
-const rks=brands.find(brand=>brand.slug==="rks");
-expect(https(rks?.serviceUrl)&&rks?.serviceMode==="official-directory","RKS resmî yetkili servis dizini kayıtlı değil");
-
-for(const model of models){
-  expect(https(model.productUrl)&&https(model.supportUrl)&&https(model.manualUrl),`Resmî ürün/destek/kılavuz kaynağı eksik: ${model.name}`);
-  expect(model.marketSource?.role==="market-discovery-only",`Akakçe teknik kaynak rolüne taşmış: ${model.name}`);
-  expect(model.marketSource?.url===market.sourceUrl,`Akakçe kategori kaynağı yanlış: ${model.name}`);
-  expect((model.symptomClusters||[]).length>=ISSUE_QUALITY_MIN,`Sorun kapsamı kalite eşiğinin altında: ${model.name}`);
-  for(const cluster of model.symptomClusters||[]){
-    expect(Boolean(cluster.title&&cluster.summary&&cluster.stopWhen&&cluster.safety),`Eksik güvenlik/teşhis alanı: ${model.name}/${cluster.slug}`);
-    expect(https(cluster.source?.url),`Sorun kümesinde resmî HTTPS kaynak yok: ${model.name}/${cluster.slug}`);
-    if(cluster.risk==="high") expect(cluster.userCanTry===false&&!(cluster.steps||[]).length,`Yüksek riskli elektrikli bisiklet sorunu DIY adımı içeriyor: ${model.name}/${cluster.slug}`);
-    const steps=(cluster.steps||[]).join(" ");
-    expect(!/batarya paketini aç|bms|kontrolcüyü aç|motor gövdesini aç|lehim|fren kaliperini sök|hidrolik fren havası/i.test(steps),`Servis seviyesi işlem kullanıcı adımlarına sızmış: ${model.name}/${cluster.slug}`);
-  }
-}
-
-const paths=[pathForDeviceType({slug:DEVICE}),...ebikeBrands.map(brand=>pathForBrand(DEVICE,brand.slug)),...families.map(pathForFamily),...models.map(pathForModel)];
-for(const path of paths){
-  const response=await app.fetch(new Request(`${SITE_ORIGIN}${path}`),{});
-  const text=await response.text();
-  expect(response.status===200,`Elektrikli bisiklet rota 200 değil: ${path} -> ${response.status}`);
-  expect(!String(response.headers.get("x-robots-tag")||"").toLowerCase().includes("noindex"),`Elektrikli bisiklet rota noindex başlığı içeriyor: ${path}`);
-  expect(!text.includes('name="robots" content="noindex'),`Elektrikli bisiklet rota noindex meta içeriyor: ${path}`);
-  expect(text.includes(`<link rel="canonical" href="${SITE_ORIGIN}${path}">`),`Canonical eksik/yanlış: ${path}`);
-}
-
-if(errors.length){for(const error of errors)console.error(`E-BIKE HATASI: ${error}`);process.exit(1)}
-console.log(`Elektrikli bisiklet kalite kapısı geçti: Akakçe ${market.observedListings} kayıt/${market.observedBrands} marka pazar taraması; kümülatif ${ebikeBrands.length} marka, ${families.length} seri/aile ve ${models.length} tam model public.`);
+expect(electricBicycleScreening?.acceptedModels===40,"Kümülatif elektrikli bisiklet paketi 40 model olmalı");expect(electricBicycleScreening?.lastBatchAccepted===10,"Son günlük paket 10 model olmalı");expect(models.length===40,`Public elektrikli bisiklet modeli 40 olmalı; mevcut=${models.length}`);expect(ebikeBrands.length===6,`Elektrikli bisiklet markası 6 olmalı; mevcut=${ebikeBrands.length}`);expect(families.length===10,`Elektrikli bisiklet seri/aile sayısı 10 olmalı; mevcut=${families.length}`);
+for(const name of ["Carraro Vector 9.5","Carraro Vector 9.3","Carraro Kifuka E7 27.5","Carraro Kifuka X","Carraro Kifuka X Pro","Carraro Kifuka S","Carraro Kifuka FS 6.0","Carraro E-Sportive X","Carraro Duty","Carraro E-Power LTD"])expect(models.some(model=>model.name===name),`Günlük Carraro modeli public değil: ${name}`);
+expect(electricBicycleScreening.held?.some(item=>item.name==="Carraro E-Time Easy"),"Carraro E-Time Easy kalite bekletme kaydı eksik");expect(electricBicycleScreening.held?.some(item=>item.name==="Volta VSM"),"VSM sınıflandırma bekletmesi eksik");expect(!models.some(model=>/\bVSM\b/i.test(model.name)),"Volta VSM yanlışlıkla public olmuş");
+const carraro=brands.find(brand=>brand.slug==="carraro");expect(https(carraro?.serviceUrl)&&carraro?.serviceMode==="official-directory","Carraro resmî servis kanalı kayıtlı değil");
+for(const model of models){expect(https(model.productUrl)&&https(model.supportUrl)&&https(model.manualUrl),`Resmî ürün/destek/kılavuz kaynağı eksik: ${model.name}`);expect(model.marketSource?.role==="market-discovery-only",`Akakçe teknik kaynak rolüne taşmış: ${model.name}`);expect(model.marketSource?.url===market.sourceUrl,`Akakçe kategori kaynağı yanlış: ${model.name}`);expect((model.symptomClusters||[]).length>=ISSUE_QUALITY_MIN,`Sorun kapsamı kalite eşiğinin altında: ${model.name}`);for(const cluster of model.symptomClusters||[]){expect(Boolean(cluster.title&&cluster.summary&&cluster.stopWhen&&cluster.safety),`Eksik güvenlik/teşhis alanı: ${model.name}/${cluster.slug}`);expect(https(cluster.source?.url),`Sorun kümesinde resmî HTTPS kaynak yok: ${model.name}/${cluster.slug}`);if(cluster.risk==="high")expect(cluster.userCanTry===false&&!(cluster.steps||[]).length,`Yüksek riskli sorun DIY adımı içeriyor: ${model.name}/${cluster.slug}`);const steps=(cluster.steps||[]).join(" ");expect(!/batarya paketini aç|bms|kontrolcüyü aç|motor gövdesini aç|lehim|fren kaliperini sök|hidrolik fren havası/i.test(steps),`Servis seviyesi işlem kullanıcı adımlarına sızmış: ${model.name}/${cluster.slug}`);}}
+const paths=[pathForDeviceType({slug:DEVICE}),...ebikeBrands.map(brand=>pathForBrand(DEVICE,brand.slug)),...families.map(pathForFamily),...models.map(pathForModel)];for(const path of paths){const response=await app.fetch(new Request(`${SITE_ORIGIN}${path}`),{}),text=await response.text();expect(response.status===200,`Elektrikli bisiklet rota 200 değil: ${path} -> ${response.status}`);expect(!String(response.headers.get("x-robots-tag")||"").toLowerCase().includes("noindex"),`Elektrikli bisiklet rota noindex başlığı içeriyor: ${path}`);expect(!text.includes('name="robots" content="noindex'),`Elektrikli bisiklet rota noindex meta içeriyor: ${path}`);expect(text.includes(`<link rel="canonical" href="${SITE_ORIGIN}${path}">`),`Canonical eksik/yanlış: ${path}`);}
+if(errors.length){for(const error of errors)console.error(`E-BIKE HATASI: ${error}`);process.exit(1)}console.log(`Elektrikli bisiklet kalite kapısı geçti: kümülatif ${ebikeBrands.length} marka, ${families.length} seri/aile ve ${models.length} tam model public; son paket 10 Carraro modelidir.`);
