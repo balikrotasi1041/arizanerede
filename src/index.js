@@ -35,12 +35,16 @@ const SENSITIVE_SCAN_PATTERNS = [
   /^\/(?:[^/]+\/)*(?:\.env(?:\.[^/]+)?(?:\/|$)|\.git(?:\/|$)|\.svn(?:\/|$)|\.hg(?:\/|$))/i,
   /^\/(?:wp|wordpress)(?:\/|$)/i,
   /^\/(?:blog\/)?wp-json(?:\/|$)/i,
+  /^\/(?:[^/]+\/)*(?:wp-admin|wp-includes|wp-content)(?:\/|$)/i,
   /^\/(?:wp-admin(?:\/|$)|wp-login\.php$|wp-config\.php$|xmlrpc\.php$)/i,
   /^\/(?:[^/]+\/)*[^/]+\.php(?:\/|$)/i,
   /^\/auth\/callback(?:\/|$)/i,
   /^\/(?:phpmyadmin(?:\/|$)|adminer(?:\.php|\/|$)|phpinfo\.php$|info\.php$|server-status(?:\/|$))/i,
   /^\/(?:console|cgi-bin|actuator|server-info|WEB-INF|\.aws)(?:\/|$)/i,
+  /^\/(?:[^/]+\/)*\.aws(?:\/|$)/i,
   /^\/key\/info$/i,
+  /^\/(?:[^/]+\/)*(?:google-key|service-account(?:[-_.][^/]*)?|credentials?|gcp-key|firebase-adminsdk[^/]*)\.json$/i,
+  /^\/(?:[^/]+\/)*(?:id_rsa|id_dsa|id_ecdsa|id_ed25519|authorized_keys)(?:\.[^/]+)?$/i,
   /^\/(?:next\.config\.(?:js|mjs|ts)|nuxt\.config\.(?:js|ts)|vite\.config\.(?:js|ts))$/i,
   /^\/(?:appsettings(?:\.[^/]+)?\.json$|app\.config$|web\.config$|\.DS_Store$)/i,
   /^\/(?:vendor\/phpunit(?:\/|$)|composer\.(?:json|lock)$|package-lock\.json$|yarn\.lock$|pnpm-lock\.yaml$)/i,
@@ -117,7 +121,7 @@ export default {async fetch(request,env={}){
     return adminHtml(render404(),404);
   }
 
-  if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8","cache-control":"public, max-age=3600"}))});
+  if(path==="/robots.txt")return new Response(`User-agent: *\nAllow: /\nDisallow: /ara\nDisallow: /admin/\nDisallow: /health\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`,{headers:securityHeaders(new Headers({"content-type":"text/plain; charset=utf-8","cache-control":"public, max-age=3600"}))});
   if(path==="/sitemap.xml")return new Response(sitemapIndex(),{headers:securityHeaders(new Headers({"content-type":"application/xml; charset=utf-8","cache-control":"public, max-age=3600"}))});
   if(/^\/sitemap-(hubs|models|issues|guides)\.xml$/.test(path)){
     const name=path.match(/^\/sitemap-(hubs|models|issues|guides)\.xml$/)?.[1];
