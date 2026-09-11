@@ -1,0 +1,57 @@
+const DEVICE="elektrikli-bisiklet";
+const MARKET="https://www.akakce.com/elektrikli-bisiklet.html";
+const VERIFIED_AT="2026-09-11";
+const MONDIAL_HOME="https://www.mondialmotor.com.tr/";
+const MONDIAL_LIST="https://www.mondialmotor.com.tr/fiyat-listesi";
+const MONDIAL_SUPPORT="https://www.mondialmotor.com.tr/iletisim";
+const MONDIAL_SERVICE="https://www.mondialmotor.com.tr/servis-noktalari";
+const SKYJET_SUPPORT="https://www.skyjet.com.tr/contact.html";
+const SKYJET_MANUALS="https://drive.google.com/drive/folders/1EdgvI2PA40GkYGu-UKlprRyZ4bXf7GeE?usp=sharing";
+
+export const mondialSkyjetEbikeBrands=[
+ {slug:"mondial",name:"Mondial",deviceTypes:[DEVICE],catalogStatus:"verified-models",trustLevel:"brand-official",officialTurkey:MONDIAL_HOME,officialCatalogUrl:MONDIAL_LIST,supportUrl:MONDIAL_SUPPORT,manualUrl:MONDIAL_LIST,serviceUrl:MONDIAL_SERVICE,warrantyUrl:MONDIAL_SUPPORT,serviceMode:"official-directory",serviceSummary:"Yetkili servis adı yalnız Mondial'in resmî Servis Noktaları dizininden doğrulanır; üçüncü taraf servis adı yayımlanmaz."}
+];
+
+export const mondialSkyjetEbikeFamilies=[
+ {deviceType:DEVICE,brand:"mondial",slug:"mondial-e-bike",name:"Mondial E-Bike Modelleri",familyKind:"neutral-collection",catalogBasis:"Akakçe Türkiye pazar keşfi + Mondial resmî E-BIKE fiyat listesi, model, iletişim ve servis kaynakları"}
+];
+
+const c=(slug,title,risk,summary,steps,stopWhen,safety,url,label)=>({slug,title,risk,summary,steps,userCanTry:risk!=="high",stopWhen,safety,source:{label,url},communityAlternatives:[]});
+function clusters(url,label){return [
+ c("acilmiyor-guc","Açılmıyor / güç gelmiyor","medium","Ana güç, ekran ve bataryanın dıştan oturuşu güvenli biçimde kontrol edilir.",["Bisikleti kuru ve güvenli yerde kapatıp yeniden açın.","Çıkarılabilir batarya varsa yalnız kilit ve dış oturuşunu kontrol edin.","Görünür kablolarda ezilme veya gevşek dış bağlantı olup olmadığına bakın."],"Koku, duman, kıvılcım, erime, sıvı girişi veya batarya deformasyonu varsa kullanmayın.","Batarya paketi, BMS, kontrolcü, motor gövdesi ve yüksek akım tesisatını açmayın.",url,label),
+ c("sarj-batarya","Şarj / batarya sorunu","medium","Doğru şarj cihazı, priz, sıcaklık ve şarj portunun dış durumu kontrol edilir.",["Üreticinin uygun gördüğü şarj cihazını sağlam bir prizde deneyin.","Şarj portunda nem varsa enerji vermeden tamamen kurumasını bekleyin.","Batarya aşırı sıcak veya soğuksa normal ortam sıcaklığına gelmesini bekleyin."],"Batarya veya şarj cihazı aşırı ısınıyor, şişiyor, kokuyor ya da duman çıkarıyorsa şarjı kesin.","Batarya/şarj cihazını açmayın; hücre, BMS, lehim veya yüksek akım müdahalesi yapmayın.",url,label),
+ c("menzil-dususu","Menzil belirgin düştü","low","Lastik basıncı, yük, rota, sıcaklık ve destek seviyesi menzili etkileyebilir.",["Lastik basıncını izin verilen aralıkta kontrol edin.","Tam şarj sonrası benzer rota ve destek seviyesinde yeniden gözlemleyin.","Soğuk hava, yokuş, yük ve sık dur-kalk etkisini not edin."],"Yüzde aniden düşüyor, sistem yükte kapanıyor veya batarya anormal ısınıyorsa servise geçin.","Bataryayı açarak hücre ölçümü, dengeleme veya hücre değişimi yapmayın.",url,label),
+ c("motor-destegi","Motor / pedal desteği devreye girmiyor","medium","Destek seviyesi ve fren kolu konumu dıştan kontrol edilir.",["Destek seviyesinin sıfır olmadığını doğrulayın.","Fren kollarının tamamen serbest konuma döndüğünü kontrol edin.","Pedal çevirirken desteğin sürekli mi aralıklı mı kesildiğini not edin."],"Destek beklenmedik anda devreye giriyor veya sürüşte kesiliyorsa elektrik desteğini kullanmayın.","Sensör kablolarını köprülemeyin; kontrolcü veya motor parametrelerini değiştirmeyin.",url,label),
+ c("ekran-hata-kodu","Ekran / hata kodu / sistem uyarısı","medium","Kod veya sembol kaydedilir; yalnız resmî dokümandaki kullanıcı seviyesi kontroller uygulanır.",["Kod veya sembolü ve oluştuğu koşulu not edin.","Bisikleti güvenli yerde kapatıp yeniden açın.","Yalnız dıştan görülebilen bağlantı ve hasarı kontrol edin."],"Uyarı tekrarlıyor veya motor, batarya ya da fren sistemiyle ilişkiliyse servise geçin.","Servis menülerinde hız, akım, teker çapı veya motor parametresi değiştirmeyin.",url,label),
+ c("pedal-sensoru","Pedal sensörü / destek algılama sorunu","medium","Pedal desteğinin hangi koşulda başladığı veya kesildiği dıştan gözlenir.",["Güvenli alanda düşük destek seviyesinde davranışı gözlemleyin.","Fren kollarının serbest olduğunu doğrulayın.","Sorunun belirli vites veya pedal konumuyla ilişkisini not edin."],"Destek gecikmeli, kesintili veya beklenmedik biçimde güç veriyorsa sürüşü bırakın.","Sensör, mıknatıs veya kablo tesisatına servis seviyesinde ayar/söküm yapmayın.",url,label),
+ c("fren","Fren zayıf / sürtüyor / kol hissi anormal","high","Fren güvenlik kritik sistemdir; kullanıcı çözümü olarak yalnız dış gözlem verilir.",[],"Fren mesafesi uzadıysa, kol dibe gidiyorsa veya sistem hasarlıysa sürmeyin.","Kaliper hizalama, hidrolik müdahale, balata/kablo değişimi veya fren ayarı servis seviyesidir.",url,label),
+ c("lastik-jant","Lastik / jant / teker sorunu","high","Basınç ve görünür hasar kontrol edilir; jant ve aks müdahaleleri servis seviyesidir.",[],"Lastikte yarık/balon, jantta eğrilik, tekerde gevşeklik veya yalpalama varsa sürmeyin.","Motorlu göbekte aks/kablo sökümü ve jant doğrultma kullanıcı çözümü değildir.",url,label),
+ c("zincir-aktarma","Zincir / vites / aktarma sorunu","medium","Aktarma elektrik desteği kapalıyken dıştan gözlemlenir.",["Elektrik desteğini kapatın.","Zincirde kir/pas ve dişlilerde yabancı cisim olup olmadığını kontrol edin.","Üretici izin veriyorsa uygun bisiklet zincir yağıyla temel bakım yapın."],"Zincir sık atlıyor, aktarıcı eğri veya tahrik kilitlenmiş görünüyorsa servise başvurun.","Motor enerjiliyken aktarmaya elinizi yaklaştırmayın ve elektrikli tahrik parçalarını sökmeyin.",url,label),
+ c("isiklar","Aydınlatma / ışıklar çalışmıyor","medium","Varsa sistem ekranından aydınlatma durumu ve dış kablo/armatür hasarı gözlenir.",["Aydınlatma kumandasını ve ekran göstergesini kontrol edin.","Lambada görünür darbe veya nem olup olmadığına bakın.","Bisikleti kapatıp yeniden açarak sistemi tekrar deneyin."],"Kablo hasarı, kısa devre belirtisi veya yanık kokusu varsa servise geçin.","Elektrik tesisatını kesmeyin, ek yapmayın veya lehimlemeyin.",url,label),
+ c("ses-titresim","Anormal ses / titreşim","medium","Sesin teker, aktarma veya elektrik desteğiyle ilişkisi güvenli biçimde gözlenir.",["Elektrik desteğini kapatıp bisikleti elde yavaşça yürütün.","Sesin teker dönüşü, zincir veya motor desteğiyle ilişkisini not edin.","Görünür gevşek aksesuar olup olmadığını kontrol edin."],"Metal sürtmesi, teker yalpalaması, motor bölgesinden vuruntu veya frenle ilişkili ses varsa sürmeyin.","Motor gövdesini açmayın veya yatak/dişli müdahalesi yapmayın.",url,label),
+ c("su-nem","Su / nem sonrası sorun","high","Suya maruz kalan elektrik sistemi enerji verilmeden dıştan değerlendirilir.",[],"Batarya, şarj portu, ekran veya konnektörlerde görünür su/nem varsa kullanmayın ve şarj etmeyin.","Gövde, batarya, kontrolcü veya motoru açarak kurutma yapmayın; ısı tabancası kullanmayın.",url,label),
+ c("sicaklik","Aşırı sıcak / soğukta performans sorunu","medium","Aşırı sıcaklık batarya ve elektronik sistemlerde performans veya koruma davranışı oluşturabilir.",["Bisikleti kuru ve normal sıcaklıktaki ortama alın.","Batarya normal sıcaklığa gelmeden şarj etmeyin.","Sıcaklık normale döndükten sonra sistemi yeniden gözlemleyin."],"Batarya veya motor olağandışı sıcak, şişmiş, kokulu ya da tekrarlı korumaya geçiyorsa kullanmayın.","Batarya paketini açmayın, termal sensör veya BMS üzerinde işlem yapmayın.",url,label)
+];}
+
+const mondial=(slug,name,url,marketLabel)=>({deviceType:DEVICE,brand:"mondial",family:"mondial-e-bike",slug,name,modelCode:name.replace(/^Mondial /,""),productUrl:url,supportUrl:MONDIAL_SUPPORT,manualUrl:url,verifiedAt:VERIFIED_AT,verificationLevel:"official-product+official-price-list+official-support+official-service",marketSource:{label:"Akakçe elektrikli bisiklet pazar keşfi",url:MARKET,role:"market-discovery-only"},marketLabel,symptomClusters:clusters(url,`${name} Mondial resmî ürün teknik kaynağı`)});
+const skyjet=(slug,name,url,marketLabel)=>({deviceType:DEVICE,brand:"skyjet",family:"diger-e-bike",slug,name,modelCode:name.replace(/^Skyjet /,""),productUrl:url,supportUrl:SKYJET_SUPPORT,manualUrl:SKYJET_MANUALS,verifiedAt:VERIFIED_AT,verificationLevel:"official-product+official-support+official-manual-library",marketSource:{label:"Akakçe elektrikli bisiklet pazar keşfi",url:MARKET,role:"market-discovery-only"},marketLabel,symptomClusters:clusters(url,`${name} Skyjet resmî ürün teknik kaynağı`)});
+
+export const mondialSkyjetEbikeModels=[
+ mondial("vespucci-t","Mondial Vespucci T","https://www.mondialmotor.com.tr/model/vespucci-t","Akakçe: Mondial Vespucci T 250 W"),
+ mondial("prostreet-st","Mondial Prostreet ST","https://www.mondialmotor.com.tr/model/prostreet-st","Akakçe: Mondial Prostreet ST 250 W; renk kayıtları tek modelde birleştirildi"),
+ mondial("prostreet-t","Mondial Prostreet T","https://www.mondialmotor.com.tr/model/prostreet-t","Akakçe: Mondial Prostreet T 250 W"),
+ mondial("starlight-sm","Mondial Starlight SM","https://www.mondialmotor.com.tr/model/starlight-sm","Akakçe: Mondial Starlight SM 250 W"),
+ mondial("starlight-m","Mondial Starlight M","https://www.mondialmotor.com.tr/model/starlight-m","Akakçe: Mondial Starlight M 250 W; renk kayıtları tek modelde birleştirildi"),
+ mondial("miracle-s","Mondial Miracle S","https://www.mondialmotor.com.tr/model/miracle-s","Akakçe: Mondial Miracle S 250 W"),
+ mondial("imperial","Mondial Imperial","https://www.mondialmotor.com.tr/model/imperial","Akakçe: Mondial Imperial 250 W"),
+ mondial("miracle-m","Mondial Miracle M","https://www.mondialmotor.com.tr/model/miracle-m","Akakçe: Mondial Miracle M 250 W"),
+ mondial("imperial-pro","Mondial Imperial Pro","https://www.mondialmotor.com.tr/model/imperial-pro","Akakçe: Mondial Imperial Pro 250 W"),
+ skyjet("6a","Skyjet 6A","https://www.skyjet.com.tr/model/6a.html","Akakçe: Skyjet 6A 250 W")
+];
+
+export const mondialSkyjetEbikeScreening={sourceUrl:MARKET,observedAt:VERIFIED_AT,acceptedThisBatch:10,brandsPrioritized:["Mondial","Skyjet"],held:[
+ {name:"Skyjet H1",reason:"Akakçe pazar kaydı güçlü; doğrudan resmî model URL'si bu turda kararlı Skyjet teknik sayfasına çözülmediği için bekletildi."},
+ {name:"Skyjet GTIII PRO",reason:"Akakçe ve Skyjet ana katalog görünürlüğü var; model-seviyesi resmî teknik URL bu turda kararlı doğrulanamadığı için bekletildi."},
+ {name:"Skyjet TRVIII PRO W",reason:"Akakçe ve Skyjet ana katalog görünürlüğü var; model-seviyesi resmî teknik URL bu turda kararlı doğrulanamadığı için bekletildi."},
+ {name:"Mondial Prostreet ST / Starlight M renk varyantları",reason:"Akakçe'deki renk seçenekleri ayrı cihaz sayılmadı; ana model URL'sinde birleştirildi."}
+]};
