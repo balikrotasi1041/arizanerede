@@ -1,7 +1,7 @@
 {
-  "version": 17,
-  "capturedAt": "2026-09-18",
-  "count": 1207,
-  "sha256": "65cce78dde1aeb52280cb5057217fe6c316bd48279b7fed239683a182f7e2e16",
-  "policy": "Every complete public technical issue, supported brand-category catalog, family and model page is an index target. Published URLs may change only with an explicit contract update; removed URLs require an intentional redirect or gone decision."
+  "version": 18,
+  "capturedAt": "2026-09-20",
+  "count": 1208,
+  "sha256": "f00428c09466507c2173ee87a175fb0aded965a2b9c07ff1e3df9056871dabee",
+  "policy": "Every complete public technical issue, supported brand-category catalog, family and model page is an index target. New daily catalog work must not create standalone issue/error URLs; verified issues stay inside model pages. Published URLs may change only with an explicit contract update; removed URLs require an intentional redirect or gone decision."
 }
