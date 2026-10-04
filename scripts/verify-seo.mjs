@@ -10,6 +10,8 @@ const expect=(ok,message)=>{if(!ok)errors.push(message)};
 const get=path=>app.fetch(new Request(`${SITE_ORIGIN}${path}`),{});
 const SEO_MAX_ISSUE_TO_MODEL_RATIO=0.35;
 const SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO=1.85;
+const RECOVERY_MAX_STANDALONE_ISSUE_ROUTES=213;
+const RECOVERY_MIN_INDEXABLE_MODELS=717;
 const noNoindex=async(path,label)=>{
   const response=await get(path);const text=await response.text();
   expect(response.status===200,`${label} 200 değil: ${path} -> ${response.status}`);
@@ -40,7 +42,9 @@ expect(!sitemapUrls.some(url=>url.includes("/ara")||url.includes("/admin/")||url
 const issueToModelRatio=indexableModels.length?indexableIssues.length/indexableModels.length:0;
 const indexTargetToModelRatio=indexableModels.length?sitemapUrls.length/indexableModels.length:0;
 expect(issueToModelRatio<=SEO_MAX_ISSUE_TO_MODEL_RATIO,`SEO güvenlik valfi: bağımsız arıza/model oranı ${(issueToModelRatio*100).toFixed(1)}% ile ${(SEO_MAX_ISSUE_TO_MODEL_RATIO*100).toFixed(0)}% sınırını aşıyor. Yeni sorunları önce model sayfasında tut.`);
-expect(indexTargetToModelRatio<=SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO,`SEO güvenlik valfi: indeks hedefi/model oranı ${indexTargetToModelRatio.toFixed(2)} ile ${SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO.toFixed(2)} sınırını aşıyor. URL üretimini yavaşlat.`);\nexpect(indexableIssues.length<=RECOVERY_MAX_STANDALONE_ISSUE_ROUTES,`Kurtarma modu: bağımsız arıza URL sayısı ${indexableIssues.length}; mevcut ${RECOVERY_MAX_STANDALONE_ISSUE_ROUTES} tabanının üstüne yeni sorun/ariza/hata URL açma.`);\nexpect(indexableModels.length>=RECOVERY_MIN_INDEXABLE_MODELS,`Kurtarma modu: indekslenebilir model sayısı ${indexableModels.length}; korunan ${RECOVERY_MIN_INDEXABLE_MODELS} model tabanının altına düşemez.`);
+expect(indexTargetToModelRatio<=SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO,`SEO güvenlik valfi: indeks hedefi/model oranı ${indexTargetToModelRatio.toFixed(2)} ile ${SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO.toFixed(2)} sınırını aşıyor. URL üretimini yavaşlat.`);
+expect(indexableIssues.length<=RECOVERY_MAX_STANDALONE_ISSUE_ROUTES,`Kurtarma modu: bağımsız arıza URL sayısı ${indexableIssues.length}; mevcut ${RECOVERY_MAX_STANDALONE_ISSUE_ROUTES} tabanının üstüne yeni sorun/ariza/hata URL açma.`);
+expect(indexableModels.length>=RECOVERY_MIN_INDEXABLE_MODELS,`Kurtarma modu: indekslenebilir model sayısı ${indexableModels.length}; korunan ${RECOVERY_MIN_INDEXABLE_MODELS} model tabanının altına düşemez.`);
 
 for(const absolute of sitemapUrls){
   const path=absolute.slice(SITE_ORIGIN.length)||"/";
