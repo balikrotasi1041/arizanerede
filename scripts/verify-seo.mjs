@@ -10,6 +10,8 @@ const expect=(ok,message)=>{if(!ok)errors.push(message)};
 const get=path=>app.fetch(new Request(`${SITE_ORIGIN}${path}`),{});
 const SEO_MAX_ISSUE_TO_MODEL_RATIO=0.35;
 const SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO=1.85;
+const RECOVERY_MAX_STANDALONE_ISSUE_ROUTES=213;
+const RECOVERY_MIN_INDEXABLE_MODELS=717;
 const noNoindex=async(path,label)=>{
   const response=await get(path);const text=await response.text();
   expect(response.status===200,`${label} 200 değil: ${path} -> ${response.status}`);
@@ -41,6 +43,8 @@ const issueToModelRatio=indexableModels.length?indexableIssues.length/indexableM
 const indexTargetToModelRatio=indexableModels.length?sitemapUrls.length/indexableModels.length:0;
 expect(issueToModelRatio<=SEO_MAX_ISSUE_TO_MODEL_RATIO,`SEO güvenlik valfi: bağımsız arıza/model oranı ${(issueToModelRatio*100).toFixed(1)}% ile ${(SEO_MAX_ISSUE_TO_MODEL_RATIO*100).toFixed(0)}% sınırını aşıyor. Yeni sorunları önce model sayfasında tut.`);
 expect(indexTargetToModelRatio<=SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO,`SEO güvenlik valfi: indeks hedefi/model oranı ${indexTargetToModelRatio.toFixed(2)} ile ${SEO_MAX_INDEX_TARGET_TO_MODEL_RATIO.toFixed(2)} sınırını aşıyor. URL üretimini yavaşlat.`);
+expect(indexableIssues.length<=RECOVERY_MAX_STANDALONE_ISSUE_ROUTES,`Kurtarma modu: bağımsız arıza URL sayısı ${indexableIssues.length}; mevcut ${RECOVERY_MAX_STANDALONE_ISSUE_ROUTES} tabanının üstüne yeni sorun/ariza/hata URL açma.`);
+expect(indexableModels.length>=RECOVERY_MIN_INDEXABLE_MODELS,`Kurtarma modu: indekslenebilir model sayısı ${indexableModels.length}; korunan ${RECOVERY_MIN_INDEXABLE_MODELS} model tabanının altına düşemez.`);
 
 for(const absolute of sitemapUrls){
   const path=absolute.slice(SITE_ORIGIN.length)||"/";
@@ -96,4 +100,4 @@ const searchText=await noNoindex("/ara/?q=55C64LA","İç arama");
 expect(searchText.includes("55C64LA"),"İç arama model kodu sorgusuna cevap vermiyor");
 
 if(errors.length){for(const error of errors)console.error(`SEO HATASI: ${error}`);process.exit(1)}
-console.log(`SEO kalite kapısı geçti: ${sitemapUrls.length} indeks hedefi, ${indexableIssues.length}/${issues.length} teknik arıza public ve indeks hedefinde, issue/model oranı ${(issueToModelRatio*100).toFixed(1)}%, indeks/model oranı ${indexTargetToModelRatio.toFixed(2)}, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası; noindex kullanılmıyor.`);
+console.log(`SEO kalite kapısı geçti: ${sitemapUrls.length} indeks hedefi, ${indexableIssues.length}/${issues.length} teknik arıza public ve indeks hedefinde, issue/model oranı ${(issueToModelRatio*100).toFixed(1)}%, indeks/model oranı ${indexTargetToModelRatio.toFixed(2)}, kurtarma tavanı ${RECOVERY_MAX_STANDALONE_ISSUE_ROUTES} bağımsız arıza URL, korunan model tabanı ${RECOVERY_MIN_INDEXABLE_MODELS}, ${indexableEditorialGuides.length} rehber, ${indexableServiceGuides.length} servis sayfası; noindex kullanılmıyor.`);
