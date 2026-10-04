@@ -304,6 +304,23 @@ for(const [from,to] of [...rescueWave2Entries,...rescueFamilyEntries]){
   rescueRedirects.set(from,to);
 }
 
+export const rescueWave3Candidates=[
+  "/yazici/brother/dcp-ve-hl-serileri/hl-l2461dn/bos-sayfa/",
+  "/robot-supurge/xiaomi/s-ve-x-serileri/robot-vacuum-s10-plus/",
+  "/televizyon/onvo/google-whale-ve-android-tv/55vq90f3ua/acilmiyor/",
+  "/robot-supurge/dreame/l-serisi/l40-ultra-ae/paspas-su-vermiyor/",
+  "/yazici/pantum/p-ve-m-serileri/m6500nw/surucu-yuklenmiyor/",
+  "/robot-supurge/xiaomi/s-ve-x-serileri/robot-vacuum-s10-plus/sarj-olmuyor/"
+];
+export const rescueWave3Entries=rescueWave3Candidates.map(from=>[from,resolveHistoricalModelPath(from)]);
+const unresolvedWave3=rescueWave3Entries.filter(([,to])=>!to);
+if(unresolvedWave3.length)throw new Error(`Kurtarma 3. dalga çözülemeyen URL'ler: ${unresolvedWave3.map(([from])=>from).join(", ")}`);
+for(const [from,to] of rescueWave3Entries){
+  if(canonicalSet.has(from))throw new Error(`Kurtarma 3. dalga URL artık canonical: ${from}`);
+  if(!canonicalSet.has(to))throw new Error(`Kurtarma 3. dalga hedef canonical değil: ${from} -> ${to}`);
+  rescueRedirects.set(from,to);
+}
+
 export function legacyRedirectFor(path){
   const withSlash=path.endsWith("/")?path:`${path}/`;
   return rescueRedirects.get(withSlash)||legacyCandidates.get(withSlash)||null;
