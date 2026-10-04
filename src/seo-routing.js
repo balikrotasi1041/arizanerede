@@ -192,6 +192,50 @@ for(const [from,to] of rescueRedirectEntries){
 const rescueRedirects=new Map(rescueRedirectEntries);
 
 
+export function sitemapIndex(){
+  const names=Object.keys(sitemapGroups);
+  return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${names.map(name=>`<sitemap><loc>${SITE_ORIGIN}/sitemap-${name}.xml</loc><lastmod>${UPDATED}</lastmod></sitemap>`).join("")}</sitemapindex>`;
+}
+
+export function sitemapUrlset(name){
+  const paths=sitemapGroups[name];
+  if(!paths)return null;
+  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map(path=>`<url><loc>${SITE_ORIGIN}${xmlEscape(path)}</loc><lastmod>${UPDATED}</lastmod></url>`).join("")}</urlset>`;
+}
+
+export function canonicalRedirectFor(path){
+  if(path==="/"||path.endsWith("/"))return null;
+  return canonicalWithoutSlash.get(path)||null;
+}
+
+const legacyCandidates=new Map();
+const ambiguous=new Set();
+function addLegacy(from,to){
+  if(canonicalSet.has(from))return;
+  const existing=legacyCandidates.get(from);
+  if(existing&&existing!==to){ambiguous.add(from);legacyCandidates.delete(from);return;}
+  if(!ambiguous.has(from))legacyCandidates.set(from,to);
+}
+
+for(const model of indexableModels){
+  const canonical=pathForModel(model);
+  const aliases=new Set([model.slug,slugify(model.name),slugify(model.modelCode)]);
+  for(const alias of aliases){
+    if(!alias)continue;
+    addLegacy(`/${model.deviceType}/${model.brand}/${alias}/`,canonical);
+  }
+}
+for(const issue of indexableIssues){
+  const canonical=pathForIssue(issue);
+  const model=indexableModels.find(item=>item.deviceType===issue.deviceType&&item.brand===issue.brand&&item.family===issue.family&&item.slug===issue.model);
+  if(!model)continue;
+  const modelAliases=new Set([model.slug,slugify(model.name),slugify(model.modelCode)]);
+  for(const alias of modelAliases){
+    if(!alias)continue;
+    addLegacy(`/${issue.deviceType}/${issue.brand}/${alias}/${issue.slug}/`,canonical);
+  }
+}
+
 const rescueWave2Candidates=[
   "/dikey-supurge/karaca/vantuz-ve-aquaclean/vantuz-power-up-pro/hava-yolu-tikali/",
   "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/e2-pro/isik-veya-sinyal-calismiyor/",
@@ -255,49 +299,6 @@ for(const [from,to] of rescueWave2Entries){
   rescueRedirects.set(from,to);
 }
 
-export function sitemapIndex(){
-  const names=Object.keys(sitemapGroups);
-  return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${names.map(name=>`<sitemap><loc>${SITE_ORIGIN}/sitemap-${name}.xml</loc><lastmod>${UPDATED}</lastmod></sitemap>`).join("")}</sitemapindex>`;
-}
-
-export function sitemapUrlset(name){
-  const paths=sitemapGroups[name];
-  if(!paths)return null;
-  return `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${paths.map(path=>`<url><loc>${SITE_ORIGIN}${xmlEscape(path)}</loc><lastmod>${UPDATED}</lastmod></url>`).join("")}</urlset>`;
-}
-
-export function canonicalRedirectFor(path){
-  if(path==="/"||path.endsWith("/"))return null;
-  return canonicalWithoutSlash.get(path)||null;
-}
-
-const legacyCandidates=new Map();
-const ambiguous=new Set();
-function addLegacy(from,to){
-  if(canonicalSet.has(from))return;
-  const existing=legacyCandidates.get(from);
-  if(existing&&existing!==to){ambiguous.add(from);legacyCandidates.delete(from);return;}
-  if(!ambiguous.has(from))legacyCandidates.set(from,to);
-}
-
-for(const model of indexableModels){
-  const canonical=pathForModel(model);
-  const aliases=new Set([model.slug,slugify(model.name),slugify(model.modelCode)]);
-  for(const alias of aliases){
-    if(!alias)continue;
-    addLegacy(`/${model.deviceType}/${model.brand}/${alias}/`,canonical);
-  }
-}
-for(const issue of indexableIssues){
-  const canonical=pathForIssue(issue);
-  const model=indexableModels.find(item=>item.deviceType===issue.deviceType&&item.brand===issue.brand&&item.family===issue.family&&item.slug===issue.model);
-  if(!model)continue;
-  const modelAliases=new Set([model.slug,slugify(model.name),slugify(model.modelCode)]);
-  for(const alias of modelAliases){
-    if(!alias)continue;
-    addLegacy(`/${issue.deviceType}/${issue.brand}/${alias}/${issue.slug}/`,canonical);
-  }
-}
 
 export function legacyRedirectFor(path){
   const withSlash=path.endsWith("/")?path:`${path}/`;
