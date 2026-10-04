@@ -191,6 +191,7 @@ for(const [from,to] of rescueRedirectEntries){
 }
 const rescueRedirects=new Map(rescueRedirectEntries);
 
+
 export function sitemapIndex(){
   const names=Object.keys(sitemapGroups);
   return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${names.map(name=>`<sitemap><loc>${SITE_ORIGIN}/sitemap-${name}.xml</loc><lastmod>${UPDATED}</lastmod></sitemap>`).join("")}</sitemapindex>`;
@@ -233,6 +234,74 @@ for(const issue of indexableIssues){
     if(!alias)continue;
     addLegacy(`/${issue.deviceType}/${issue.brand}/${alias}/${issue.slug}/`,canonical);
   }
+}
+
+const rescueWave2Candidates=[
+  "/dizustu-bilgisayar/dell/inspiron-ve-latitude/latitude-3550/ekran-gelmiyor/",
+  "/yazici/hp/smart-tank-ve-laserjet-tank/smart-tank-580/hata-isiklari/",
+  "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01k/ekran-hata-kodu/",
+  "/dikey-supurge/dreame/r-ve-z-serileri/r20/pil-hizli-bitiyor/",
+  "/dizustu-bilgisayar/dell/inspiron-ve-latitude/latitude-3550/pil-hizli-bitiyor/",
+  "/televizyon/sunny/webos-ve-qled/sn55qmn252/ekranda-cizgi-veya-leke/",
+  "/yazici/pantum/p-ve-m-serileri/p2500w/yazdirmiyor/"
+];
+function resolveHistoricalModelPath(path){
+  const segments=path.split("/").filter(Boolean);
+  if(segments.length!==4&&segments.length!==5)return null;
+  const [device,brand,,modelAlias,issueAlias]=segments;
+  if(issueAlias){
+    const familylessIssue=`/${device}/${brand}/${modelAlias}/${issueAlias}/`;
+    const issueTarget=legacyCandidates.get(familylessIssue);
+    if(issueTarget)return issueTarget;
+  }
+  const familylessModel=`/${device}/${brand}/${modelAlias}/`;
+  return canonicalSet.has(familylessModel)?familylessModel:(legacyCandidates.get(familylessModel)||null);
+}
+export const rescueWave2Entries=rescueWave2Candidates.map(from=>[from,resolveHistoricalModelPath(from)]);
+const unresolvedWave2=rescueWave2Entries.filter(([,to])=>!to);
+if(unresolvedWave2.length)throw new Error(`Kurtarma 2. dalga çözülemeyen URL'ler: ${unresolvedWave2.map(([from])=>from).join(", ")}`);
+export const rescueFamilyEntries=[
+  [
+    "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/",
+    "/elektrikli-scooter/segway-ninebot/ekickscooter/"
+  ],
+  [
+    "/televizyon/grundig/ghu-serisi/",
+    "/televizyon/grundig/televizyon-modelleri/"
+  ],
+  [
+    "/dizustu-bilgisayar/hp/victus-ve-hp-laptop/",
+    "/dizustu-bilgisayar/hp/dizustu-modelleri/"
+  ],
+  [
+    "/masaustu-bilgisayar/hp/pro-tower/",
+    "/masaustu-bilgisayar/hp/masaustu-modelleri/"
+  ],
+  [
+    "/robot-supurge/xiaomi/s-ve-x-serileri/",
+    "/robot-supurge/xiaomi/robot-vacuum/"
+  ],
+  [
+    "/televizyon/sunny/webos-ve-qled/",
+    "/televizyon/sunny/guncel-tv-modelleri/"
+  ],
+  [
+    "/dizustu-bilgisayar/lenovo/ideapad-ve-loq/",
+    "/dizustu-bilgisayar/lenovo/dizustu-modelleri/"
+  ],
+  [
+    "/klima/samsung/windfree/",
+    "/klima/samsung/klima-modelleri/"
+  ],
+  [
+    "/televizyon/tcl/c-ve-p-serileri/",
+    "/televizyon/tcl/televizyon-modelleri/"
+  ]
+];
+for(const [from,to] of [...rescueWave2Entries,...rescueFamilyEntries]){
+  if(canonicalSet.has(from))throw new Error(`Kurtarma 2. dalga URL artık canonical: ${from}`);
+  if(!canonicalSet.has(to))throw new Error(`Kurtarma 2. dalga hedef canonical değil: ${from} -> ${to}`);
+  rescueRedirects.set(from,to);
 }
 
 export function legacyRedirectFor(path){

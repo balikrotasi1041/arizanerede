@@ -4,7 +4,7 @@ import {
   pathForDeviceType,pathForBrand,pathForFamily,pathForModel,pathForIssue,ISSUE_QUALITY_MIN
 } from "../src/catalog.js";
 import {adminMetrics} from "../src/admin-dashboard.js";
-import {rescueRedirectEntries} from "../src/seo-routing.js";
+import {rescueRedirectEntries,rescueWave2Entries,rescueFamilyEntries} from "../src/seo-routing.js";
 
 const errors=[];
 const expect=(ok,message)=>{if(!ok)errors.push(message)};
@@ -95,6 +95,16 @@ for(const [from,to] of rescueRedirectEntries){
   expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma yönlendirmesi başarısız: ${from} -> ${to}`);
 }
 expect(rescueRedirectEntries.length===37,`Kurtarma yönlendirme paketi beklenen 37 kayıt değil: ${rescueRedirectEntries.length}`);
+for(const [from,to] of rescueWave2Entries){
+  const response=await get(from);
+  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma 2. dalga yönlendirmesi başarısız: ${from} -> ${to}`);
+}
+expect(rescueWave2Entries.length===7,`Kurtarma 2. dalga beklenen 7 model/sorun kaydı değil: ${rescueWave2Entries.length}`);
+for(const [from,to] of rescueFamilyEntries){
+  const response=await get(from);
+  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma aile yönlendirmesi başarısız: ${from} -> ${to}`);
+}
+expect(rescueFamilyEntries.length===9,`Kurtarma aile paketi beklenen 9 kayıt değil: ${rescueFamilyEntries.length}`);
 
 const robots=await body("/robots.txt");
 expect(robots.text.includes("Disallow: /admin/")&&robots.text.includes("Disallow: /ara")&&robots.text.includes(`${SITE_ORIGIN}/sitemap.xml`),"robots.txt admin/arama/sitemap kuralları eksik");
@@ -118,4 +128,4 @@ expect(dashboard.status===200&&dashboardText.includes("Support-only kalan marka"
 expect(!dashboardText.includes('name="robots" content="noindex'),"Admin HTML noindex meta kullanmamalı");
 
 if(errors.length){for(const error of errors)console.error(`ROTA HATASI: ${error}`);process.exit(1)}
-console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası, ${rescueRedirectEntries.length} doğrulanmış GSC 404 kurtarma yönlendirmesi; sitemap index, canonical redirect, eski URL kurtarma, arama, health ve admin fail-closed çalışıyor.`);
+console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası, ${rescueRedirectEntries.length+rescueWave2Entries.length+rescueFamilyEntries.length} doğrulanmış GSC 404 kurtarma yönlendirmesi; sitemap index, canonical redirect, eski URL kurtarma, arama, health ve admin fail-closed çalışıyor.`);
