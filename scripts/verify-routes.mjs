@@ -4,7 +4,7 @@ import {
   pathForDeviceType,pathForBrand,pathForFamily,pathForModel,pathForIssue,ISSUE_QUALITY_MIN
 } from "../src/catalog.js";
 import {adminMetrics} from "../src/admin-dashboard.js";
-import {rescueRedirectEntries,rescueWave2Entries,rescueFamilyEntries} from "../src/seo-routing.js";
+import {rescueRedirectEntries,rescueWave2Entries,rescueFamilyEntries,rescueWave3Entries} from "../src/seo-routing.js";
 
 const errors=[];
 const expect=(ok,message)=>{if(!ok)errors.push(message)};
@@ -105,6 +105,11 @@ for(const [from,to] of rescueFamilyEntries){
   expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma aile yönlendirmesi başarısız: ${from} -> ${to}`);
 }
 expect(rescueFamilyEntries.length===9,`Kurtarma aile paketi beklenen 9 kayıt değil: ${rescueFamilyEntries.length}`);
+for(const [from,to] of rescueWave3Entries){
+  const response=await get(from);
+  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma 3. dalga yönlendirmesi başarısız: ${from} -> ${to}`);
+}
+expect(rescueWave3Entries.length===6,`Kurtarma 3. dalga beklenen 6 kayıt değil: ${rescueWave3Entries.length}`);
 
 const robots=await body("/robots.txt");
 expect(robots.text.includes("Disallow: /admin/")&&robots.text.includes("Disallow: /ara")&&robots.text.includes(`${SITE_ORIGIN}/sitemap.xml`),"robots.txt admin/arama/sitemap kuralları eksik");
@@ -128,4 +133,4 @@ expect(dashboard.status===200&&dashboardText.includes("Support-only kalan marka"
 expect(!dashboardText.includes('name="robots" content="noindex'),"Admin HTML noindex meta kullanmamalı");
 
 if(errors.length){for(const error of errors)console.error(`ROTA HATASI: ${error}`);process.exit(1)}
-console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası, ${rescueRedirectEntries.length+rescueWave2Entries.length+rescueFamilyEntries.length} doğrulanmış GSC 404 kurtarma yönlendirmesi; sitemap index, canonical redirect, eski URL kurtarma, arama, health ve admin fail-closed çalışıyor.`);
+console.log(`Rotalar doğrulandı: ${deviceTypes.length} kategori, ${indexableFamilies.length} aile, ${indexableModels.length} model, ${issues.length} ayrı arıza rotası, ${rescueRedirectEntries.length+rescueWave2Entries.length+rescueFamilyEntries.length+rescueWave3Entries.length} doğrulanmış GSC 404 kurtarma yönlendirmesi; sitemap index, canonical redirect, eski URL kurtarma, arama, health ve admin fail-closed çalışıyor.`);
