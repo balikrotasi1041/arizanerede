@@ -237,46 +237,13 @@ for(const issue of indexableIssues){
 }
 
 const rescueWave2Candidates=[
-  "/dikey-supurge/karaca/vantuz-ve-aquaclean/vantuz-power-up-pro/hava-yolu-tikali/",
-  "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/e2-pro/isik-veya-sinyal-calismiyor/",
-  "/dizustu-bilgisayar/casper/nirvana-ve-excalibur/excalibur-g915/wifi-baglanmiyor/",
-  "/elektrikli-scooter/xiaomi/scooter-4-serisi/scooter-4-lite-2nd-gen/acilmiyor/",
-  "/masaustu-bilgisayar/hp/pro-tower/pro-tower-400-g9/ses-yok/",
-  "/klima/sunny/inverter-split/18000-btu-a-plus-plus/acilmiyor/",
-  "/kahve-makinesi/bosch/verocafe-ve-verocup/tqu60307/acilmiyor/",
-  "/yazici/xerox/phaser-ve-b-serileri/phaser-3020/yazdirmiyor/",
   "/dizustu-bilgisayar/dell/inspiron-ve-latitude/latitude-3550/ekran-gelmiyor/",
-  "/dikey-supurge/fakir/inovator-ve-bolt/bolt-x-plus-aqua-8472/",
-  "/televizyon/lg/oled-ve-qned/55qned86a/goruntu-yok-ses-var/",
-  "/klima/baymak/elegant-prime/elegant-prime-12/isitmiyor/",
   "/yazici/hp/smart-tank-ve-laserjet-tank/smart-tank-580/hata-isiklari/",
-  "/televizyon/samsung/neo-qled-ve-crystal-uhd/ue55du8000uxtk/hdmi-sinyal-yok/",
   "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01k/ekran-hata-kodu/",
-  "/dikey-supurge/arcelik/imperium-go/sd-9361/cekis-gucu-dustu/",
-  "/dikey-supurge/fakir/inovator-ve-bolt/inovator-7286/asiri-isiniyor/",
   "/dikey-supurge/dreame/r-ve-z-serileri/r20/pil-hizli-bitiyor/",
-  "/klima/daikin/sensira-ve-shira/ftxp25n9/anormal-ses/",
-  "/dizustu-bilgisayar/acer/aspire-ve-nitro/aspire-5-a515-58/fan-sesi/",
-  "/dizustu-bilgisayar/casper/nirvana-ve-excalibur/nirvana-s100/ekran-gelmiyor/",
-  "/kahve-makinesi/bosch/verocafe-ve-verocup/tis30321rw/kahve-vermiyor/",
-  "/yazici/xerox/phaser-ve-b-serileri/phaser-3020/bos-sayfa/",
-  "/klima/regal/rgl-serisi/rgl-18000-a/kumanda-calismiyor/",
-  "/kahve-makinesi/bosch/verocafe-ve-verocup/tis30321rw/kirec-uyarisi/",
   "/dizustu-bilgisayar/dell/inspiron-ve-latitude/latitude-3550/pil-hizli-bitiyor/",
-  "/klima/samsung/windfree/ar12txcaawk-sk/acilmiyor/",
-  "/robot-supurge/homend/alex/alex-laser-1291h/",
-  "/televizyon/vestel/4k-smart-tv/50ua9740/ses-yok-goruntu-var/",
-  "/klima/grundig/g-serisi-inverter/gac-12003/wifi-baglanmiyor/",
-  "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/f2-pro-ii/fren-zayif-veya-sesli/",
-  "/klima/daikin/sensira-ve-shira/ftxp25n9/wifi-baglanmiyor/",
-  "/dizustu-bilgisayar/hp/victus-ve-hp-laptop/hp-laptop-15-fd/acilmiyor/",
-  "/dikey-supurge/homend/dustrider/dustrider-1271h/cekis-gucu-dustu/",
-  "/robot-supurge/homend/alex/alex-50-pro/acilmiyor/",
   "/televizyon/sunny/webos-ve-qled/sn55qmn252/ekranda-cizgi-veya-leke/",
-  "/kahve-makinesi/beko/espresso-ve-turk-kahvesi/tkm-8961-a/cezveyi-algilamiyor/",
-  "/robot-supurge/homend/alex/alex-laser-1291h/istasyonu-bulamiyor/",
-  "/yazici/pantum/p-ve-m-serileri/p2500w/yazdirmiyor/",
-  "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/e2-pro/firmware-guncellenmiyor/"
+  "/yazici/pantum/p-ve-m-serileri/p2500w/yazdirmiyor/"
 ];
 function resolveHistoricalModelPath(path){
   const segments=path.split("/").filter(Boolean);
@@ -293,12 +260,49 @@ function resolveHistoricalModelPath(path){
 export const rescueWave2Entries=rescueWave2Candidates.map(from=>[from,resolveHistoricalModelPath(from)]);
 const unresolvedWave2=rescueWave2Entries.filter(([,to])=>!to);
 if(unresolvedWave2.length)throw new Error(`Kurtarma 2. dalga çözülemeyen URL'ler: ${unresolvedWave2.map(([from])=>from).join(", ")}`);
-for(const [from,to] of rescueWave2Entries){
+export const rescueFamilyEntries=[
+  [
+    "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/",
+    "/elektrikli-scooter/segway-ninebot/ekickscooter/"
+  ],
+  [
+    "/televizyon/grundig/ghu-serisi/",
+    "/televizyon/grundig/televizyon-modelleri/"
+  ],
+  [
+    "/dizustu-bilgisayar/hp/victus-ve-hp-laptop/",
+    "/dizustu-bilgisayar/hp/dizustu-modelleri/"
+  ],
+  [
+    "/masaustu-bilgisayar/hp/pro-tower/",
+    "/masaustu-bilgisayar/hp/masaustu-modelleri/"
+  ],
+  [
+    "/robot-supurge/xiaomi/s-ve-x-serileri/",
+    "/robot-supurge/xiaomi/robot-vacuum/"
+  ],
+  [
+    "/televizyon/sunny/webos-ve-qled/",
+    "/televizyon/sunny/guncel-tv-modelleri/"
+  ],
+  [
+    "/dizustu-bilgisayar/lenovo/ideapad-ve-loq/",
+    "/dizustu-bilgisayar/lenovo/dizustu-modelleri/"
+  ],
+  [
+    "/klima/samsung/windfree/",
+    "/klima/samsung/klima-modelleri/"
+  ],
+  [
+    "/televizyon/tcl/c-ve-p-serileri/",
+    "/televizyon/tcl/televizyon-modelleri/"
+  ]
+];
+for(const [from,to] of [...rescueWave2Entries,...rescueFamilyEntries]){
   if(canonicalSet.has(from))throw new Error(`Kurtarma 2. dalga URL artık canonical: ${from}`);
   if(!canonicalSet.has(to))throw new Error(`Kurtarma 2. dalga hedef canonical değil: ${from} -> ${to}`);
   rescueRedirects.set(from,to);
 }
-
 
 export function legacyRedirectFor(path){
   const withSlash=path.endsWith("/")?path:`${path}/`;
