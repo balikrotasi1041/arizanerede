@@ -304,6 +304,57 @@ for(const [from,to] of [...rescueWave2Entries,...rescueFamilyEntries]){
   rescueRedirects.set(from,to);
 }
 
+export const rescueWave3Candidates=[
+  "/kahve-makinesi/karaca/hatir/hatir-plus-barista/kahve-soguk/",
+  "/klima/demirdokum/a5-performance-ve-kion/kion-12000/kumanda-calismiyor/",
+  "/robot-supurge/arcelik/imperium-robo/rs-6131/acilmiyor/",
+  "/televizyon/arcelik/4k-google-tv/a50-d-893-b/yazilim-guncellenmiyor/",
+  "/yazici/brother/dcp-ve-hl-serileri/hl-l2461dn/bos-sayfa/",
+  "/dizustu-bilgisayar/lenovo/ideapad-ve-loq/loq-15iax9/yavasliyor-donuyor/",
+  "/masaustu-bilgisayar/asus/expertcenter-ve-rog/rog-g700/fan-sesi/",
+  "/robot-supurge/beko/robo-x/vrr-95514-vw/",
+  "/klima/demirdokum/a5-performance-ve-kion/a5-performance-12000/buzlanma/",
+  "/robot-supurge/xiaomi/s-ve-x-serileri/robot-vacuum-s10-plus/",
+  "/kahve-makinesi/beko/espresso-ve-turk-kahvesi/tkm-8961-a/tabana-sivi-kacti/",
+  "/klima/beko/ekolojik-inverter/31225-a/su-akitiyor/",
+  "/klima/tcl/elite-ve-breezein/tac-18chsd-xa73i/wifi-baglanmiyor/",
+  "/elektrikli-scooter/segway-ninebot/f-e-ve-max-serileri/e2-pro/motor-guc-kesiyor/",
+  "/televizyon/onvo/google-whale-ve-android-tv/55vq90f3ua/acilmiyor/",
+  "/kahve-makinesi/karaca/hatir/hatir-plus-barista/",
+  "/dikey-supurge/homend/dustrider/dustrider-pro-1270h/kendiliginden-duruyor/",
+  "/robot-supurge/dreame/l-serisi/l40-ultra-ae/paspas-su-vermiyor/",
+  "/dizustu-bilgisayar/msi/modern-ve-cyborg/modern-15-b13m/ekran-gelmiyor/",
+  "/dizustu-bilgisayar/msi/modern-ve-cyborg/modern-15-b13m/",
+  "/klima/baymak/elegant-prime/elegant-prime-18/hava-uflemiyor/",
+  "/kahve-makinesi/arcelik/espresso-ve-turk-kahvesi/em-6395/hazne-algilanmiyor/",
+  "/televizyon/onvo/google-whale-ve-android-tv/43ovf9000f/",
+  "/klima/airfel/ltxm-serisi/ltxm50n/",
+  "/yazici/pantum/p-ve-m-serileri/m6500nw/surucu-yuklenmiyor/",
+  "/kahve-makinesi/homend/coffeebreak-ve-pottoman/coffeebreak-5008h/anormal-ses/",
+  "/dizustu-bilgisayar/acer/aspire-ve-nitro/nitro-v-15-anv15-51/wifi-baglanmiyor/",
+  "/klima/airfel/ltxm-serisi/ltxm50n/buzlanma/",
+  "/robot-supurge/xiaomi/s-ve-x-serileri/robot-vacuum-s10-plus/sarj-olmuyor/",
+  "/dizustu-bilgisayar/casper/nirvana-ve-excalibur/nirvana-s100/",
+  "/klima/tcl/elite-ve-breezein/tac-12chsd-xa73i/sogutmuyor/",
+  "/klima/demirdokum/a5-performance-ve-kion/kion-12000/",
+  "/televizyon/vestel/4k-smart-tv/50ua9740/yazilim-guncellenmiyor/",
+  "/yazici/canon/pixma-ve-i-sensys/i-sensys-mf651cw/kagit-almiyor/",
+  "/klima/regal/rgl-serisi/rgl-18000-a/",
+  "/masaustu-bilgisayar/hp/pro-tower/pro-tower-400-g9/yavasliyor-donuyor/",
+  "/televizyon/beko/4k-google-tv/b55-d-895-b/",
+  "/masaustu-bilgisayar/lenovo/thinkcentre-ve-loq-tower/thinkcentre-neo-50t-gen-5/asiri-isiniyor/",
+  "/televizyon/regal/r-serisi/50r754u/ses-yok-goruntu-var/",
+  "/elektrikli-scooter/rks/elektrikli-mobilite/rsiii-pro/menzil-dustu/"
+];
+export const rescueWave3Entries=rescueWave3Candidates.map(from=>[from,resolveHistoricalModelPath(from)]);
+const unresolvedWave3=rescueWave3Entries.filter(([,to])=>!to);
+if(unresolvedWave3.length)throw new Error(`Kurtarma 3. dalga çözülemeyen URL'ler: ${unresolvedWave3.map(([from])=>from).join(", ")}`);
+for(const [from,to] of rescueWave3Entries){
+  if(canonicalSet.has(from))throw new Error(`Kurtarma 3. dalga URL artık canonical: ${from}`);
+  if(!canonicalSet.has(to))throw new Error(`Kurtarma 3. dalga hedef canonical değil: ${from} -> ${to}`);
+  rescueRedirects.set(from,to);
+}
+
 export function legacyRedirectFor(path){
   const withSlash=path.endsWith("/")?path:`${path}/`;
   return rescueRedirects.get(withSlash)||legacyCandidates.get(withSlash)||null;
