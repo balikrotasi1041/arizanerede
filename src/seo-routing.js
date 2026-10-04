@@ -33,6 +33,164 @@ export const allIndexablePaths=unique(Object.values(sitemapGroups).flat());
 const canonicalSet=new Set(allIndexablePaths);
 const canonicalWithoutSlash=new Map(allIndexablePaths.filter(path=>path!=="/").map(path=>[path.replace(/\/$/,""),path]));
 
+// Search Console 2026-09-20: only high-confidence historical 404s whose replacement
+// model URL is still a canonical index target. Do not broaden this into catch-all redirects.
+export const rescueRedirectEntries=[
+  [
+    "/dikey-supurge/dreame/r-ve-z-serileri/r20/",
+    "/dikey-supurge/dreame/dikey-supurge-modelleri/r20/"
+  ],
+  [
+    "/dikey-supurge/dyson/v-ve-gen5-serileri/v15-detect/",
+    "/dikey-supurge/dyson/v15-serisi/v15-detect/"
+  ],
+  [
+    "/dikey-supurge/philips/kablosuz-dikey-serileri/xc8057-01/",
+    "/dikey-supurge/philips/kablosuz-dikey-supurge-modelleri/xc8057-01/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/gidon-bosluk/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/motor-guc-kesiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/uygulamaya-baglanmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01m/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01s/acilmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-01s/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/acilmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/gidon-bosluk/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/uygulamaya-baglanmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-02k/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03k/firmware-guncellenmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03k/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03m/acilmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03m/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03m/fren-zayif-veya-sesli/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03m/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/ekran-hata-kodu/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/fren-zayif-veya-sesli/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/gidon-bosluk/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/sarj-olmuyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/kx-03p/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-01/acilmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-01/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-01/firmware-guncellenmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-01/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-03/fren-zayif-veya-sesli/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/mx-03/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-007/firmware-guncellenmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-007/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-007/sarj-olmuyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-007/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-008/gidon-bosluk/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-008/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-008/uygulamaya-baglanmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-008/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012-x-plus/uygulamaya-baglanmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012-x-plus/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012/ekran-hata-kodu/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012/sarj-olmuyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-012/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-013-x-plus/firmware-guncellenmiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-013-x-plus/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-013-x-plus/lastik-hava-kaciriyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/ov-013-x-plus/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-04/ekran-hata-kodu/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-04/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-06p/motor-guc-kesiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-06p/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-10/isik-veya-sinyal-calismiyor/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/rx-10/"
+  ],
+  [
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/sb-800/gidon-bosluk/",
+    "/elektrikli-scooter/onvo/elektrikli-scooter-modelleri/sb-800/"
+  ],
+  [
+    "/kahve-makinesi/philips/tam-otomatik-espresso/ep2331-10/su-akitiyor/",
+    "/kahve-makinesi/philips/tam-otomatik-espresso/ep2331-10/"
+  ],
+  [
+    "/robot-supurge/dreame/l-serisi/l40-ultra-ae/",
+    "/robot-supurge/dreame/robot-supurge-modelleri/l40-ultra-ae/"
+  ],
+  [
+    "/televizyon/onvo/google-whale-ve-android-tv/55vq90f3ua/",
+    "/televizyon/onvo/televizyon-modelleri/55vq90f3ua/"
+  ],
+  [
+    "/televizyon/sunny/webos-ve-qled/sn65fmn252/",
+    "/televizyon/sunny/guncel-tv-modelleri/sn65fmn252/"
+  ]
+];
+for(const [from,to] of rescueRedirectEntries){
+  if(canonicalSet.has(from))throw new Error(`Kurtarma yönlendirmesi artık canonical olmuş: ${from}`);
+  if(!canonicalSet.has(to))throw new Error(`Kurtarma yönlendirmesi hedefi canonical değil: ${from} -> ${to}`);
+}
+const rescueRedirects=new Map(rescueRedirectEntries);
+
 export function sitemapIndex(){
   const names=Object.keys(sitemapGroups);
   return `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${names.map(name=>`<sitemap><loc>${SITE_ORIGIN}/sitemap-${name}.xml</loc><lastmod>${UPDATED}</lastmod></sitemap>`).join("")}</sitemapindex>`;
@@ -79,5 +237,5 @@ for(const issue of indexableIssues){
 
 export function legacyRedirectFor(path){
   const withSlash=path.endsWith("/")?path:`${path}/`;
-  return legacyCandidates.get(withSlash)||null;
+  return rescueRedirects.get(withSlash)||legacyCandidates.get(withSlash)||null;
 }
