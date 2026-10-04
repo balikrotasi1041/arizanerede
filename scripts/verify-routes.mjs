@@ -94,7 +94,17 @@ for(const [from,to] of rescueRedirectEntries){
   const response=await get(from);
   expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma yönlendirmesi başarısız: ${from} -> ${to}`);
 }
-expect(rescueRedirectEntries.length===37,`Kurtarma yönlendirme paketi beklenen 37 kayıt değil: ${rescueRedirectEntries.length}`);\nfor(const [from,to] of rescueWave2Entries){\n  const response=await get(from);\n  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma 2. dalga yönlendirmesi başarısız: ${from} -> ${to}`);\n}\nexpect(rescueWave2Entries.length===7,`Kurtarma 2. dalga beklenen 7 model/sorun kaydı değil: ${rescueWave2Entries.length}`);\nfor(const [from,to] of rescueFamilyEntries){\n  const response=await get(from);\n  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma aile yönlendirmesi başarısız: ${from} -> ${to}`);\n}\nexpect(rescueFamilyEntries.length===9,`Kurtarma aile paketi beklenen 9 kayıt değil: ${rescueFamilyEntries.length}`);
+expect(rescueRedirectEntries.length===37,`Kurtarma yönlendirme paketi beklenen 37 kayıt değil: ${rescueRedirectEntries.length}`);
+for(const [from,to] of rescueWave2Entries){
+  const response=await get(from);
+  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma 2. dalga yönlendirmesi başarısız: ${from} -> ${to}`);
+}
+expect(rescueWave2Entries.length===7,`Kurtarma 2. dalga beklenen 7 model/sorun kaydı değil: ${rescueWave2Entries.length}`);
+for(const [from,to] of rescueFamilyEntries){
+  const response=await get(from);
+  expect(response.status===308&&response.headers.get("location")===`${SITE_ORIGIN}${to}`,`Kurtarma aile yönlendirmesi başarısız: ${from} -> ${to}`);
+}
+expect(rescueFamilyEntries.length===9,`Kurtarma aile paketi beklenen 9 kayıt değil: ${rescueFamilyEntries.length}`);
 
 const robots=await body("/robots.txt");
 expect(robots.text.includes("Disallow: /admin/")&&robots.text.includes("Disallow: /ara")&&robots.text.includes(`${SITE_ORIGIN}/sitemap.xml`),"robots.txt admin/arama/sitemap kuralları eksik");
